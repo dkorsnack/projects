@@ -1,0 +1,176 @@
+\documentclass[6pt]{article}
+\usepackage[top=0.75in, bottom=0.75in, left=0.25in, right=0.25in]{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage[document]{ragged2e}
+
+\usepackage[yyyymmdd]{datetime}
+\renewcommand{\dateseparator}{-}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\Large{\textbf{Measuring \& Managing Equity Portfolio Risk}}}
+\rhead{\texttt{Compiled on {\today} at \currenttime}}
+\lfoot{\textit{Prepared for} \textbf{PRCM} \textit{by David Korsnack}}
+\rfoot{Page \thepage}
+ 
+\begin{document}
+
+\textbf{\underline{Summary}} \\
+
+\justify Systematic investment strategies that rely on measuring markets can
+be improved by increasing the frequency of observations and/or the dimensionality
+of the data set. Specifically, below are some examples of improving the risk-adjusted
+return of the S\&P500 by reaching more stastically significant conclusions about the
+index's risk profile: \\
+
+\begin{center}
+Risk Managed S\&P500 Strategies \\
+\begin{tabular}{|c|ccccc|}
+  \hline
+  & Ann Ret \% & Ann Vol \% & Ann Ret/Vol & Max DD \% & Turnover \% \\
+  \hline
+  Buy-and-Hold SPY & 7.83 & 19.31 & 0.41 & 55.19 & 0.00 \\ 
+  \^{}VIX Managed SPY, Intraday Frequency & 7.62 & 15.87 & 0.48 & 45.29 & 7.74 \\
+  $\mathbf{\Sigma}$ Managed SPY, Intraday Frequency & 11.52 & 16.56 & 0.70 & 42.03 & 10.74 \\
+  \hline
+\end{tabular} \\
+\end{center}
+
+\vspace{1in}
+
+\textbf{\underline{Current Measurements}} (as of 2017-02-08) \\
+
+\begin{center}
+Approximate Index Weights (\%) \\
+\begin{tabular}{|ccccccccc|}
+  \hline
+  XLB & XLE & XLF & XLI & XLK & XLP & XLU & XLV & XLY \\
+  \hline
+  5.30 & 6.78 & 14.19 & 14.83 & 15.04 & 7.20 & 5.93 & 12.92 & 17.80 \\
+  \hline
+\end{tabular} 
+\vspace{0.25in}
+
+Intraday Frequency, 100 data point window \\
+\begin{tabular}{|c|ccccccccc||c|}
+  \hline
+  $\rho_{xy}$ & XLB & XLE & XLF & XLI & XLK & XLP & XLU & XLV & XLY & SPY \\
+  \hline
+    XLB & 1.00 & 0.70 & 0.81 & 0.90 & 0.78 & 0.78 & 0.27 & 0.76 & 0.88 & 0.90 \\
+    XLE & & 1.00 & 0.68 & 0.72 & 0.70 & 0.61 & 0.15 & 0.64 & 0.75 & 0.77 \\
+    XLF & & & 1.00 & 0.88 & 0.75 & 0.79 & 0.24 & 0.75 & 0.84 & 0.88 \\
+    XLI & & & & 1.00 & 0.79 & 0.81 & 0.31 & 0.84 & 0.87 & 0.92 \\
+    XLK & & & & & 1.00 & 0.74 & 0.24 & 0.79 & 0.81 & 0.91 \\
+    XLP & & & & & & 1.00 & 0.30 & 0.79 & 0.77 & 0.86 \\
+    XLU & & & & & & & 1.00 & 0.23 & 0.21 & 0.28 \\
+    XLV & & & & & & & & 1.00 & 0.79 & 0.89 \\
+    XLY & & & & & & & & & 1.00 & 0.92 \\
+  \hline
+  \hline
+  $\sigma_{x}$ (\%) & 19.41 & 20.15 & 21.80 & 18.96 & 20.85 & 14.22 & 12.27 & 18.69 & 18.86 & 16.99 \\
+  \hline
+\end{tabular}
+
+\newpage
+
+\Large{$\sigma=$ CBOE Volatility Index}
+\includegraphics{SPY.png}
+\includegraphics{^VIX.png}
+\includegraphics{rv.png}
+\includegraphics{acorr.png}
+
+\newpage
+
+\Large{$\sigma=$ CBOE Volatility Index}
+\includegraphics{xx.png}
+\includegraphics{cr.png}
+\includegraphics{dd.png}
+\includegraphics{v.png}
+
+\newpage
+
+\Large{$\sigma\overset{?}{=}$\ CBOE Volatility Index\ $\overset{?}{=}$\ Realized Volatility}
+\includegraphics{SPY.png}
+\includegraphics{^VIX.png}
+\includegraphics{vv.png}
+\includegraphics{vr.png}
+
+\newpage
+
+\Large{
+  $\sigma=$\ Realized Volatility\ $=\sqrt{\mathbf{W}\mathbf{\Sigma}\mathbf{W^\mathsf{T}}}$; 
+  $\overline{\rho}=$\ Realized Average Correlation\ $=\mathbf{W}\mathbf{P}\mathbf{W^\mathsf{T}}$
+}
+\includegraphics{XLX.png}
+\includegraphics{sr.png}
+\includegraphics{sc.png}
+\includegraphics{ss.png}
+
+\newpage
+
+\Large{
+  $\sigma=$\ Realized Volatility\ $=\sqrt{\mathbf{W}\mathbf{\Sigma}\mathbf{W^\mathsf{T}}}$; 
+  $\overline{\rho}=$\ Realized Average Correlation\ $=\mathbf{W}\mathbf{P}\mathbf{W^\mathsf{T}}$
+}
+\includegraphics{sx.png}
+\includegraphics{foo.png}
+\includegraphics{sdd.png}
+\includegraphics{svv.png}
+
+\end{center}
+ 
+\newpage
+
+\underline{\textbf{Notation}}
+
+\begin{itemize}
+  \item Minimum: $\wedge$
+  \item Maximum: $\vee$
+  \item Annualized Return: $\mu$
+  \item Annualized Volatility: $\sigma$
+  \item Change: $\Delta$
+  \item Mean: $$\overline{x}=\frac{1}{N}\sum_{i=1}^Nx_{i}$$
+  \item Covariance: $$\sigma_{xy}=\frac{1}{N}\sum_{i=1}^N(x_{i}-\overline{x})(y_{i}-\overline{y})$$
+  \item Volatility: $$\sigma_{x}=\sqrt{\sigma_{xx}}$$
+  \item Correlation: $$\rho_{xy}=\frac{\sigma_{xy}}{\sigma_{x}\sigma_{y}}$$
+  \item Covariance Matrix: $$\mathbf{\Sigma}=
+    \begin{bmatrix}
+      \sigma_{11} & \ldots & \sigma_{1N} \\
+      \vdots & \ddots & \vdots \\
+      \sigma_{N1} & \ldots & \sigma_{NN} \\
+    \end{bmatrix}
+  $$
+  \item Correlation Matrix: $$\mathbf{P}=
+    \begin{bmatrix}
+      \rho_{11} & \ldots & \rho_{1N} \\
+      \vdots & \ddots & \vdots \\
+      \rho_{N1} & \ldots & \rho_{NN} \\
+    \end{bmatrix}
+  $$
+  \item Portfolio Weights: $$\mathbf{W}=(w_{1} \ldots w_{N})$$
+\end{itemize}
+
+\underline{\textbf{Notes}}
+
+\begin{itemize}
+  \item \^{}VIX Managed: $Exposure_{t}=2 \wedge \frac{20}{VIX_{t-1}}$
+  \item $\mathbf{\Sigma}$ Managed: $Exposure_{t}=2 \wedge \frac{0.15}{a\sqrt{\mathbf{W^*}\mathbf{\Sigma_{t-1}}\mathbf{W^*}^\mathsf{T}}}$ 
+    where $\mathbf{W^*}=\underset{\mathbf{W}}{min}\ \overline{\rho_{t-1}}$ s.t. $\sum_{i=1}^N w_{i}=1\ $ and $\ w_{i}>0$
+\end{itemize}
+
+
+\underline{\textbf{Additional $\mathbf{\Sigma}$ Management Techniques:}} \\
+\begin{itemize}
+  \item Risk Budgeting
+  \item Principal Component Analysis
+  \item Linear Torsion
+  \item Maximum Effective Bets
+  \item Maximum Diversification
+  \item Minimum Variance 
+  \item Minimum Correlation
+  \item \ldots
+\end{itemize}
+
+\end{document}

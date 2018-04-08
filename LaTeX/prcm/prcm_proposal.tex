@@ -1,0 +1,136 @@
+\documentclass[6pt]{article}
+\usepackage[top=1in, bottom=0.75in, left=0.5in, right=0.5in]{geometry}
+\usepackage{graphicx}
+\usepackage[document]{ragged2e}
+
+\usepackage[yyyymmdd]{datetime}
+\renewcommand{\dateseparator}{-}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textbf{\Large CONSULTING PROPOSAL}}
+\rhead{\includegraphics[width=0.3\textwidth]{prcm.png}}
+\rfoot{Page \thepage}
+
+\begin{document}
+
+\begin{tabular}{ll}
+  \textbf{To:} & Ethan Kay, Managing Partner, Pacific Rim Capital Management (``PRCM") \\
+  \textbf{From:} & David Korsnack \\
+  \textbf{Subject:} & Consulting Project Proposal \\
+  \textbf{Date:} & \today \\
+  \vspace{0.01in}
+\end{tabular} \\
+
+\noindent\rule{7.5in}{0.4pt}
+
+Below is a proposal for several consulting projects that span the functional
+areas of the PRCM investment process. The below information is a collection of
+personal assessments after a one day on-site visit and discussions with several
+members of the team. As a caveat, all project completion times are (conservative)
+estimates, and some of the proposals may not be deemed a priority or may have
+already begun and/or been completed. \\
+\vspace{0.1in}
+
+Page one describes short-term projects that could be completed over the
+next few months adding value to the investment process relatively quickly; page
+two lists medium- and long-term projects (enabled by the short-term work) that
+would require further discussions and a renegotiated arrangement which we can
+discuss at a later date. \\
+\vspace{0.2in}
+
+\textbf{\Large{Short-Term Projects \hfill 60 hours}} \\
+\begin{enumerate}\addtocounter{enumi}{-1}
+  \item \textbf{Setup \hfill 2 hours} \\
+    Check out \texttt{Git} repository and familiarize myself with current code,
+    infrastructure, database(s), etc. \\
+  \item \textbf{Infrastructure \hfill 12 hours} \\
+    Centralize and automate daily processes through creation of transparent
+    process management tools  \\
+    \begin{enumerate}
+      \item Process Monitor: \texttt{\$PYTHONPATH/proc/process\_monitor.py} \\
+      \item MySQL-Python interface: \texttt{\$PYTHONPATH/lib/SQL.py} \hfill \\
+    \end{enumerate}
+  \item \textbf{Data \hfill 24 hours} \\
+    Leverage existing Bloomberg infrastructure to acquire, curate and efficiently
+    store Option trade \& quote data eliminating the need for monthly data procurement
+    from additional third parties \\
+    \begin{enumerate}
+      \item Bloomberg Python API abstractions: \texttt{\$PYTHONPATH/lib/BAPI.py} \\
+      \item Bloomberg historic and real-time data acquisition: \\
+        $\cdot$ \texttt{\$PYTHONPATH/data\_acquisition/ReferenceRequest.py} \\
+        $\cdot$ \texttt{\$PYTHONPATH/data\_acquisition/HistoricRequest.py} \\
+        $\cdot$ \texttt{\$PYTHONPATH/data\_acquisition/RealTimeRequest.py} \\
+        $\vdots$ \\
+      \item Data quality assurance: \texttt{\$PYTHONPATH/data\_acquisition/qa.py} \\
+    \end{enumerate}
+  \item \textbf{Operations \hfill 8 hours} \\
+    Automate manual, daily pre- and post-trade tasks where appropriate \\
+    \begin{enumerate}
+      \item Pre-Trade Risk \& Position Report: \texttt{\$PYTHONPATH/util/pretrade\_report.tex} \\
+      \item Post-Trade Allocation: \texttt{\$PYTHONPATH/util/allocate.py} \\
+      \item Post-Trade distribution: \texttt{\$PYTHONPATH/util/ftp.py} \\
+    \end{enumerate}
+  \item \textbf{Trading \hfill 12 hours} \\
+    Automate trade order generation into Bloomberg EMSX blotter \\
+    \begin{enumerate}
+      \item Enable Bloomberg EMSX two-way communication via Bloomberg Python API \\
+        \texttt{\$PYTHONPATH/execution/EMSX.py} \\
+    \end{enumerate}
+  \item \textbf{Portfolio \& Risk Management \hfill 0 hours} \\
+  \item \textbf{Research \hfill 2 hours} \\
+    Build easy-to-use firm-wide graphics and statistics library \\
+    \begin{enumerate}
+      \item Standardized plotting and statistical tools integrated with [I]Python \& Pandas: \\
+        $\cdot$ \texttt{\$PYTHONPATH/lib/graphics.py} \\
+        $\cdot$ \texttt{\$PYTHONPATH/lib/stats.py} \\
+    \end{enumerate}
+\end{enumerate}
+
+\newpage
+
+\textbf{\Large{Medium-Term Projects}} \\
+\begin{enumerate}
+  \item \textbf{Infrastructure} \\
+    Implement formal code review and release process
+  \item \textbf{Data} \\
+    Expand investment universe to include fungible S\&P500 securities like
+    additional derivatives based on the Index such as Futures, Future Options,
+    and Index Options as well as Equity and ETFs that make up the index
+  \item \textbf{Operations} \\
+    Facilitate 24x6 trading ability
+  \item \textbf{Trading} \\
+    Build PRCM internal Execution and Order management systems while quantifying
+    and minimizing transaction cost, slippage, and market impact
+  \item \textbf{Portfolio \& Risk Management} \\
+    Real-time P\&L and position level monitoring
+  \item \textbf{Research} \\
+    Investigate options pricing model utilizing S\&P 500 constituent level data
+    to measure (and react to) changing realized covariance relationships with
+    increased statistical significance
+\end{enumerate}
+
+\vspace{0.1in}
+
+\textbf{\Large{Long-Term Projects}} \\
+\begin{enumerate}
+  \item \textbf{Infrastructure} \\
+    $\cdot$ Cohesively integrate  Windows and Linux environments \\
+    $\cdot$ Establish disaster recovery / high availability processes
+      and procedures \\
+  \item \textbf{Data} \\
+    Rearchatecture database(s) optimizing storage and retrieval efficiency
+  \item \textbf{Operations} \\
+    Multi-Broker, Multi-Strategy account reconciliation and allocation
+  \item \textbf{Trading} \\
+    Leverage direct market access across several execution partners and design
+    proprietary algorithmic execution technology to achieve best execution \\
+  \item \textbf{Portfolio \& Risk Management} \\
+    Investigate tail risk hedging opportunities
+  \item \textbf{Research} \\
+    Build back- and stress-testing engines for current strategy improvement,
+    additional strategy development, "what if" analysis, etc. \\
+\end{enumerate}
+
+\end{document}

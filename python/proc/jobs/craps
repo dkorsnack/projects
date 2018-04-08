@@ -1,0 +1,6 @@
+Command:        java -cp ../java Craps 10000
+Days:           w1-7
+StartAfter:     00:00
+HostClass:      DAVIDs-MacBook-Pro 
+Notify:         dkorsnack@gmail.com
+Manual:         20

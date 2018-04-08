@@ -1,0 +1,5 @@
+Command:        python util/wwf.py radvel.
+Days:           w1-7
+Depends:        jam-or-fold
+HostClass:      davids-Mac-mini 
+Notify:         dkorsnack@gmail.com

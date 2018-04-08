@@ -1,0 +1,467 @@
+
+A:hover {
+    text-decoration: none;
+    color: #000;
+    background-color: #FC0;
+}
+
+A.black {
+    text-decoration: none;
+    color: #007;
+}
+
+A.red {
+    text-decoration: none;
+    color: #C07;
+}
+
+A.green {
+    text-decoration: none;
+    color: #057;
+}
+
+A.gray {
+    text-decoration: none;
+    color: #66C;
+}
+
+A.availability {
+    color: #C07;
+}
+
+ACRONYM {
+    border-bottom: none;
+}
+
+BODY {
+    background-color: #f5f5f5;
+    color: #000;
+}
+
+P {
+    font-size: 12px;
+    font-family: sans, "Lucida Sans", "Sans", "Geneva", sans-serif;
+}
+
+TD, TH, DD, DT, LI {
+    font-size: 12px;
+    font-family: monospace, "Lucida Sans", "Sans", "Geneva", sans-serif;
+}
+
+TH, DT {
+    font-weight: bold;
+}
+
+H1, H2, H3, H4, H5, H6 {
+    font-family: sans, "Lucida Sans", "Sans", "Geneva", sans-serif;
+}
+
+H1 {
+    text-align: left;
+}
+
+H2, H3, H4, H5, H6 {
+    text-align: left;
+}
+
+H2 {
+    font-family: sans-serif;
+    color: white;
+    background-color: #838;
+    border-color: black;
+    border-width: 2px;
+    border-style: solid;
+    padding: 2px;
+    margin: 0px;
+    margin-top: 10px;
+    font-size: 12pt;
+    font-weight: bold;
+}
+
+H3 {
+    color: #006;
+    padding: 1px 1px 1px 1px;
+}
+
+DIV.answer {
+    margin: 0 0 0 2em;
+}
+
+DIV.expand {
+    margin: 0 0 0 2em;
+}
+
+DIV.section {
+    color: black;
+    background: white;
+    font-size: 10pt;
+    font-weight: normal;
+    padding: 8px;
+    border-width: 0px 2px 2px 2px;
+    border-style: solid;
+    border-color: black;
+    margin-top: 0px;
+}
+
+SPAN.heading {
+    background-color: #9CF;
+    color: #000;
+    border-width: 1px;
+    padding: 0 0.2em 0 0.2em;
+    border-color: #000;
+    border-style: solid;
+}
+
+SPAN.date {
+    background-color: #FFF;
+    color: #0A0;
+    font-weight: bold;
+}
+
+SPAN.title {
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+SPAN.availability {
+    font-family: sans-serif;
+    font-weight: bold;
+}
+
+SPAN.blackborder {
+    color: #000;
+    border-width: 1px;
+    padding: 2px 2px 2px 2px;
+    border-color: #000;
+    border-style: solid;
+}
+
+P.date {
+    background-color: #FFF;
+    color: #A0A;
+    font-weight: bold;
+    margin-bottom: 0;
+}
+
+P.news {
+    margin-top: 0;
+    margin-left: 3em;
+}
+
+P.credit {
+    font-size: smaller;
+    font-style: italic;
+    padding-left: 3px;
+    border-left: 3px solid;
+}
+
+P.l2 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+TABLE {
+    color: #000;
+    background-color: #FFF;
+    border-width: 1px;
+    border-color: #000;
+    border-style: solid;
+    padding: 1px;
+    font-family: monospace;
+}
+
+TABLE.noborder {
+    border-width: 0px;
+    padding: 1px;
+}
+
+TABLE.red {
+    background-color: #FCC;
+    border-width: 0px;
+    padding: 1px;
+}
+
+TABLE.white {
+    border-width: 0px;
+    padding: 1px;
+}
+
+TABLE.orange {
+    background-color: #FC7;
+    border-width: 0px;
+    padding: 1px;
+}
+
+TD.bgred {
+    background-color: #FCC;
+    border-width: 0px;
+    padding: 0px;
+}
+
+TD.heading {
+    color: #000;
+    background-color: #AFA;
+    font-weight: bold;
+}
+
+TD.headingcentered {
+    text-align: center;
+    color: #000;
+    background-color: #AFA;
+    font-weight: bold;
+}
+
+TD.leftentry {
+    text-align: left;
+    color: #000;
+    background-color: #FC7;
+}
+
+TD.dimleftentry {
+    text-align: left;
+    color: #999;
+    background-color: #FDB;
+}
+
+TD.entry {
+    text-align: center;
+    color: #000;
+    background-color: #FC7;
+}
+
+TD.dimentry {
+    text-align: center;
+    color: #999;
+    background-color: #FDB;
+}
+
+TD.centered {
+    padding: 0px;
+    text-align: center;
+}
+
+TD.c7 {
+    padding: 0px;
+    text-align: center;
+    font-weight: bold;
+    color: #FFF;
+    background-color: #44F;
+}
+
+TD.c6 {
+    padding: 0px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+    background-color: #88F;
+}
+
+TD.c5 {
+    padding: 0px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+    background-color: #CCF;
+}
+
+TD.c4 {
+    padding: 0px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+    background-color: #FFF;
+}
+
+TD.c3 {
+    padding: 0px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+    background-color: #FCC;
+}
+
+TD.c2 {
+    padding: 0px;
+    text-align: center;
+    font-weight: bold;
+    color: #000;
+    background-color: #F88;
+}
+
+TD.c1 {
+    padding: 0px;
+    text-align: center;
+    font-weight: bold;
+    color: #FFF;
+    background-color: #F44;
+}
+
+TD.boldentry {
+    color: #000;
+    background-color: #FD9;
+    font-weight: bold;
+}
+
+TH.boldentry {
+    font-weight: bold;
+    color: #000;
+    background-color: #FC7;
+}
+
+TD.boldnormal {
+    font-weight: bold;
+}
+
+TD.closedstream {
+    color: #C00;
+    background-color: #FFF;
+}
+
+TD.failedstream {
+    background-color: #F99;
+    color: #000;
+}
+
+TD.rowerror {
+    background-color: #F99;
+    color: #000;
+    font-weight: bold;
+    text-align: right;
+}
+
+TD.bb {
+    background-color: #CCE;
+}
+
+TD.bbred {
+    color: #C00;
+    background-color: #CCE;
+}
+
+TD.bbnumber {
+    text-align: right;
+    background-color: #CCE;
+}
+
+TD.bbrednumber {
+    text-align: right;
+    color: #C00;
+    background-color: #CCE;
+}
+
+TD.bbgraynumber {
+    text-align: right;
+    color: #777;
+    background-color: #CCE;
+}
+
+TD.red {
+    color: #C00;
+}
+
+TD.number {
+    text-align: right;
+}
+
+TD.rednumber {
+    text-align: right;
+    color: #C00;
+}
+
+TD.graynumber {
+    text-align: right;
+    color: #777;
+}
+
+TD.bibtex {
+  font-family: monospace;
+  border-width: 2px;
+  font-weight: normal;
+  border-color: black;
+  border-style: solid;
+  background-color: #DDF;
+}
+
+TD.failed {
+    background-color: #F44;
+}
+
+TD.impossible {
+    background-color: #F22;
+}
+
+TD.detached {
+    font-weight: bold;
+    background-color: #F44;
+}
+
+TD.ascending {
+    font-weight: bold;
+    background-color: #F77;
+}
+
+TD.blocked {
+    color: #C00;
+    font-weight: bold;
+    background-color: #FFF;
+}
+
+TD.suspended {
+    color: #C00;
+    background-color: #FFF;
+}
+
+TD.manual {
+    color: #070;
+    font-weight: bold;
+    background-color: #FFF;
+}
+
+TD.canceled {
+    color: #070;
+    background-color: #FFF;
+}
+
+TD.inactive {
+    color: #777;
+    background-color: #FFF;
+}
+
+TD.succeeded {
+    background-color: #AFA;
+}
+
+TD.descending {
+    font-weight: bold;
+    background-color: #AFA;
+}
+
+TD.running {
+    background-color: #FC7;
+}
+
+TD.waiting {
+    background-color: #FFF;
+}
+
+TD.error {
+    background-color: #F44;
+}
+
+TD.unrunnable {
+    font-weight: bold;
+    color: #C00;
+    background-color: #FFF;
+}
+
+IMG {
+    border-width: 0px;
+}
+
+IMG.invisible {
+    display: none;
+}
+
+TT.atomic {
+    white-space: nowrap;
+}

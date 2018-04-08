@@ -1,0 +1,5 @@
+Command:        python util/jof.py 25
+Days:           w1-7
+Depends:        craps
+HostClass:      DAVIDs-MacBook-Pro 
+Notify:         dkorsnack@gmail.com

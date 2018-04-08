@@ -1,0 +1,380 @@
+----------------------
+greetings & courtesies
+----------------------
+good morning: boker tov
+good evening: erev tov
+good week: shevua tov
+see you soon: l’hitra’ot
+what’s up?: ma nishma
+what's happening: ma koreh
+nict to meet you: na'em me'od
+yes: ken
+no: lo
+thank you: toda
+excuse me/i’m sorry: slicha
+please/you’re welcome: bevakasha
+what is your name (male / female): eich korim lecha / lach (ma ha'shem shelcha / shelach)
+my name is: shmi
+his name is: shmo
+her name is: shma
+how old are you (male / female): ben kama ata? / bat kama at?
+i am x years old (male / female): ani ben x. / ani bat x.
+how are you (male / female): ma shlomcha / shlomech
+fine, ok: b’seder
+not good: lo tov
+excellent: metzuyan
+i’m tired (male / female): ani ayef / ayefa
+awesome: sababa
+ok: beseder
+moment: rega
+
+-----------------
+shopping & dining
+-----------------
+i'm hungry (male / female): ani ra'ev / ani reh'eva
+do you have (male / female): yesh lecha / lach
+how much: kama zeh oleh
+i want (male / female): ani rotzeh / rotzah
+i don’t want (male / female): ani lo rotzeh / rotzah
+may i / allowed: efshar
+money: kesef
+change (literally, “leftovers”): odef
+waiter / waitress: meltzar / meltzarit
+
+------
+people
+------
+person: adam
+man: ish
+woman: isha
+girl: yelda
+girls: yeladot
+boy: yeled
+boys: yeladem
+student (male / female): talmid/talmida
+police: mishtara / shoter
+teacher (male / female): morah/moret
+doctor: rofe
+baby: tinok
+brother: ach
+sister: achot
+husband: ba'al
+wife: isha
+mother: eema
+father: aba
+grandmother: safta
+grandfather: saba
+friend (male / female): chaver / chavera
+family: mishpacha
+parents: orim
+adults (male / female): gvarim / nashim
+son: ben
+daughter: bat
+
+--------------
+getting around
+--------------
+let's go: yala
+here: poh
+there: sham
+everywhere: be khol makom
+do you speak english (male / female): ata medaber anglit / aaht medaberet anglit
+i don’t speak hebrew (male / female): ani lo medaber ivrit / ani lo medaberet ivrit
+where is: eifoh
+when: matai
+why: lama
+how: eich
+what: ma
+who: me
+which: ey'zeh
+i’m going (driving) to (male / female): ani nose’a l’ / ani nosa’at l’
+there is: yesh
+there is no: ain
+do you know where is (male / female): aht yoda'at eifoh nimtza / ata yodea eifoh nimtz
+wait/just a moment: rega
+restaurant: mis’adah
+post office (mail): do’ar
+street: rechov
+market: shuk
+synagogue: beit knesset
+church: knaissia
+central bus station: tachana merkazit
+taxi: monit (regular, taxi); sherut (shared taxi,
+automobile: mechonit
+train: rakevet
+bus: otoboos
+hotel: malon
+room: cheder
+university: universita
+passport: darkon
+hospital: beit cholim
+beach: chof
+grocery store: makolet
+what is this: ma zeh
+food: ochel
+right: yamin
+left: smol
+straight: yashar
+on top of: al ha
+underneath: meetachat la
+in: be / ba
+next to: al yad
+far away: rachok
+city: eer
+country: eretz
+to live: gar
+
+-----------------
+days dates & time
+-----------------
+after: achrey
+before: leefney
+what time is it: ma hasha’a
+hour, time: sha’a
+half: chetzi
+quarter: reva
+three quarters: reva le
+day: yom
+days: yameem
+week: shavua
+all day: kol ha yom
+month: chodesh
+year: shana
+today: ha’yom
+yesterday: etmol
+tomorrow: machar
+straight: yashar
+sunday: yom rishon
+monday: yom shenee
+tuesday: yom shlishi
+wednesday: yom revi’i
+thursday: yom chamishi
+friday: yom shishi
+saturday (sabbath): shabbat
+holiday: chag
+
+-------
+seasons
+-------
+autumn: stav
+winter: choref
+spring: aviv
+summer: kayitz
+
+-------
+numbers
+-------
+half: chetzi
+one: achat
+two: shtayim
+three: shalosh
+four: arba
+five: chamesh
+six: shesh
+seven: sheva
+eight: shmone
+nine: tesha
+ten: eser
+teens: add "esrey"
+twenty: esrim
+double digits: "x" ve "y"
+thirty: shloshim
+forty: arbaim
+fifty: chamishim
+sixty: shishim
+seventy: shivim
+eighty: shmonim
+ninety: tishim
+one hundred: mea
+two hundred: mataim
+hundred: "x" + meot
+one thousand: elef
+two thousand: alpayeem
+thousand: "x" + at'alafim
+
+-------
+animals
+-------
+fish: dag
+dog: kelev
+cat: chatul
+horse: sous
+bird: tzipor
+
+------
+colors
+------
+color: tzeva
+red: adom
+green: yarok
+yellow: tzahov
+blue: kachol
+black: shachor
+brown: chum
+white: lavan
+grey: afor
+pink: varod
+orange: katom
+purple: sagol
+
+----------------
+connecting words
+----------------
+to (i’m going to): leh
+for: bishvil
+because: kee (lama? -- kha'kha)
+because of: biglal
+on: ahl
+in: beh (place) / bah (non place)
+at: bah
+so: az
+but: aval
+and: veh
+or: oh
+maybe: oolay
+the: ha
+this: zeh
+
+-----------------
+descriptive words
+-----------------
+more: od / yoter
+everything: hakol
+nothing: klum
+a lot: harbeh
+a lot more: od harbeh
+a little: ktzat
+a little more: od ktzat
+yummy: ta'em me'od
+happy: same'ach
+sad: atsuv
+
+---------------------
+possession / pronouns
+---------------------
+he: who
+she: he
+they (male / female): hem / hen
+you (male / female): ata / at
+us / we: anachnu
+have: yesh
+not have: ayne
+i have: yesh lee
+you have (male / female): yesh lecha / yesh lach
+you have (plural): yesh lachem
+(he / she) has: yesh lo / yesh la
+they (male / female) have: yesh la'hem / yesh la'hen
+we have: yesh lanu
+this (male / female): ze / zot
+these: eleh
+
+----
+body
+----
+farts: flotzeem
+eye: ah'een
+nose: ahf
+mouth: peh
+ear: ozen
+head: rosh
+butt: tusik
+hand: yad
+poop: khaki
+pee: pee pee
+penis: boul-boul
+vagina: douch
+fat (male / female): shamen / shmenah
+skinny (male / female): razeh / razah
+live: cha'em
+hair: se'ar (blondie, gingi, ...)
+
+----
+home
+----
+home: ba'it
+bed: meeta
+shower: toush
+room: cheder
+bathtub: ambatya
+toilet: sheeruteem
+bathroom: chadar ambatya (chadar sheeruteem)
+livingroom: salon
+bedroom: chadar ha shena
+kitchen: meetbach
+dining room: chadar ha ochel
+apartment: deera
+door: delet
+sink: ki'or
+chair: keeseh
+talbe: shulchan
+window: chalon
+cup: kos
+plate: tzalachat
+
+-------
+actionsi (he is / she is ... who / he)
+-------
+runing: ratz / ratza
+swiming: socheh / socha
+walking (going): holech / holechet
+standing: omed / omedet
+sitting: yoshev / yoshevet
+sleeping: yeshen / yeshena
+driving: noheg / noheget
+cooking: meveshel / meveshelet
+eating: ochel / ochelet
+drinking: shote / shota
+playing: mesachek / mesacheket
+watching: mistakel / mistakelet
+listening: maksheev / maksheeva
+kissing: menashek / manasheket
+hugging: mechabek / mechabeket
+
+----------
+adjectives
+----------
+big: gadol
+small: katan
+tall: gavoa
+short: namuch
+
+----
+food
+----
+egg: beitza
+rice: orez
+water: mayim
+coffee: kafeh
+tea: tey
+apple: tapuach
+orange: tapooz
+bread: lechem
+chicken: oef
+beer: beera
+milk: chalav
+wine: yine
+chocolate: shocolad
+sandwich: senvech
+tomato: agvanya
+
+-----
+items
+-----
+pen: et
+book: sefer
+bicycle: of'a'naim
+computer: machshev
+ball: kadur
+
+-------
+clothes
+-------
+hat: kova
+shoes: na'aleim
+shirt: chultza
+pants: meechnasaim
+
+-------
+prayers
+-------
+shabat candle prayer: baruch ata adonai eloheinu melech ha olam asher keedshanu be mitzvotav ve tzivanoo lihadleek ner shel shabat
