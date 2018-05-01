@@ -43,6 +43,8 @@ def line_plot(data, handle, **kwargs):
         fig.axhline_plot(y=kwargs['hline_plot'], color='black', line_plotwidth=1)
     if 'logy' in kwargs:
         fig.minorticks_off()
+    if 'minor' in kwargs:
+        fig.grid(True, which='minor')
     fig.set_xlabel('Date')
     fig.get_figure().savefig(handle)
     print('line_plot '+handle)
@@ -181,7 +183,6 @@ def cum_ret_plot(rs, handle, scale, **kwargs):
         ylabel='Growth of $1 (Log Scale)',
         title='Cumulative Performance',
         yticklabels=range(1, int(np.ceil(cum.max().max())+1)),
-        minor=True,
         legend = cum_ret_legend(cum, rs, scale),
         **kwargs
     )
@@ -194,7 +195,6 @@ def drawdown_plot(rs, handle, **kwargs):
         handle,
         ylabel='Drawdown %',
         title='Drawdowns',
-        minor=True,
         legend = [
             '{0}: {1:0.2f}% [$\wedge$={2:0.2f}]'.format(k, v[-1], v.min())
             for (k,v) in dd.items()
