@@ -96,13 +96,13 @@ def edge_data(csvs):
         fl = open(csv+'.csv')
         raw = fl.readlines()
         fl.close()
-        last = raw[-1].split(',')[0]
-        sd = datetime.datetime.strptime(last, '%Y-%m-%d').date()+datetime.timedelta(1)
+        begin = raw[-1].split(',')[0]
+        sd = datetime.datetime.strptime(begin, '%Y-%m-%d').date()+datetime.timedelta(1)
         print(csv, sd, ed)
         try:
             all_data = pdd.DataReader(csv, 'yahoo', start=sd, end=ed)
             lines = '\n'.join(all_data.to_csv().split('\n')[1:])
-            print(lines[:-1])
+            print(lines[-5:])
             fl = open(csv+'.csv', 'a')
             fl.write(lines)
             fl.close()
