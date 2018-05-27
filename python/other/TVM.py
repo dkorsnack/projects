@@ -10,7 +10,7 @@ Given any four of (n, i, pmt, pv, fv) TVM object can calculate the fifth.
 '''
 
 from math import log
-from LogFile import LogFile
+from lib.LogFile import LogFile
 
 class TVM (object):
 

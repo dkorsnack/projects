@@ -21,10 +21,10 @@ from lib.net import socketConnect, socketRecv, socketSend
 #CLUSTER
 LOCATION = "localhost"
 PROC_MASTER = {}
-HOST_MAP = {}
 
 #PARAMS
 PYTHONPATH = os.environ['PYTHONPATH']
+PYTHON = "/usr/loca/bin/python"
 
 PROC_RETRY = 5
 PROC_REFRESH = 5
@@ -206,10 +206,7 @@ class ClientRequestHandler(BaseHTTPRequestHandler):
                 if st[0] == S_RUNNING:
                     invincible = "Invincible" in allProcesses[proc] \
                         and allProcesses[proc]["Invincible"]
-                    host = HOST_MAP.get(
-                        allProcesses[proc]["HostClass"],
-                        allProcesses[proc]["HostClass"]
-                    )
+                    host = allProcesses[proc]["HostClass"]
                     status = "%s%s&nbsp;%s:%s" % (
                         iif(
                             host in allHosts and not invincible,
@@ -413,7 +410,6 @@ class ClientRequestHandler(BaseHTTPRequestHandler):
 
     def process(self):
         data = ""
-
         url = self.path.split("?")
         path = url[0]
         internal = False
@@ -430,24 +426,24 @@ class ClientRequestHandler(BaseHTTPRequestHandler):
             self.link("/", "home"),
             self.link("/ns/", "home")
         )
-
         if (
             path.endswith(".css") or
             path.endswith(".png") or
             path.endswith(".js")
         ):
             try:
-                if path.endswith('.png'):
-                    f = open("%s%s" % (PROC_DIR, path), 'rb')
-                else:
-                    f = open("%s%s" % (PROC_DIR, path), 'r')
-                data = f.read()
-                self.send_response(200)
+                k = 'rb' if path.endswith('.png') else 'r'
+                with open("%s%s" % (PROC_DIR, path), k) as f:
+                    data = f.read()
                 if path.endswith(".css"):
-                    self.send_header("Content-type", "text/css")
-                else:
-                    self.send_header("ETag", "0-0-0-0")
-                    self.send_header("Content-type", "image/gif")
+                    mtype = "text/css"
+                if path.endswith(".js"):
+                    mtype = "application/javascript"
+                if path.endswith(".png"):
+                    #self.send_header("ETag", "0-0-0-0")
+                    mtype = "image/png"
+                self.send_response(200)
+                self.send_header("Content-type", mtype)
             except Exception as e:
                 self.lg.warn(e)
                 self.lg.warn(
@@ -456,7 +452,6 @@ class ClientRequestHandler(BaseHTTPRequestHandler):
                 data = "404 File Not Found"
                 self.send_response(404)
                 self.send_header("Content-type", "text/plain")
-
         elif path.endswith(".log"):
             try:
                 self.server.wq.put(
@@ -466,10 +461,7 @@ class ClientRequestHandler(BaseHTTPRequestHandler):
                 (t, allProcesses, allHosts, doneProcesses) = (
                     self.server.rq.get(timeout=PROC_RETRY))
                 proc = path[1:-4]
-                host = HOST_MAP.get(
-                    allProcesses[proc]["HostClass"],
-                    allProcesses[proc]["HostClass"]
-                )
+                host = allProcesses[proc]["HostClass"]
                 data = obtainLogFile(host, proc)
                 self.send_response(200)
                 self.send_header("Content-type", "text/plain")
@@ -558,15 +550,17 @@ class ClientRequestHandler(BaseHTTPRequestHandler):
             ))
             data = self.generate_output(
                 "Restarting Server",
-                self.table("<tr><td>Please wait several seconds, and " \
-                    + "then click the link below.</td></tr>"),
+                self.table((
+                    "<tr><td>Please wait several seconds, and "
+                    "then click the link below.</td></tr>"
+                )),
                 homelink,
                 ts,
             )
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
-            self.wfile.write(data)
+            self.wfile.write(data.encode())
             self.server.wq.put((T_INIT, ""))
             return ""
         elif path.startswith("/proc/"):
@@ -699,7 +693,7 @@ class ClientRequestHandler(BaseHTTPRequestHandler):
                 commands.append(tuple((
                     lambda x: (x[0], x[1]))(*[line.split(".")])))
             for (k, v) in sorted(set(commands)):
-                self.lg.error(str(k)+" "+str(v))
+                self.lg.warn(str(k)+" "+str(v))
                 if k == "restart":
                     self.server.wq.put((T_RESTART, v))
                 elif k == "cancel":
@@ -829,9 +823,8 @@ def obtainLogFile(host, proc):
         tfile
     )
     os.spawnlp(os.P_WAIT, *command)
-    fh = open(tfile)
-    data = fh.read()
-    fh.close()
+    with open(tfile) as fh:
+        data = fh.read()
     return data
 
 def tokenize(contents, f, lg):
@@ -885,11 +878,11 @@ def tokenize(contents, f, lg):
     return d
 
 def loadSingleProcess(f, lg):
+    # TODO: do this from the db?
     try:
         fn = "%s/%s" % (PROC_JOBS, f)
-        fh = open(fn)
-        contents = [x.strip("\n") for x in fh.readlines()]
-        fh.close()
+        with open(fn) as fh:
+            contents = [x.strip("\n") for x in fh.readlines()]
         fn = fn[len(PROC_JOBS)+1:]
     except Exception as e:
         lg.warn("failed to load process: %s\n%s" % (
@@ -939,36 +932,29 @@ def handleLaunchAck(allProcesses, allHosts, proc, host, requestTimestamp, args, 
     (instruction, data) = args[:2]
     (timestamp, pid) = data
     if timestamp != requestTimestamp:
-        updateStatus(allProcesses, allHosts, proc,\
-            [S_ERROR, rt, rt], dt, lg)
+        updateStatus(allProcesses, proc, [S_ERROR, rt, rt], lg)
         raise Exception("Launch req/ack mismatch for %s on %s. PID: %s." % (proc, host, pid))
     if allProcesses[proc]["Status"] == S_RUNNING:
-        updateStatus(allProcesses, allHosts, proc,\
-            [S_ERROR, allProcesses[proc]["Status"][4], rt], dt, lg)
+        updateStatus(allProcesses, proc, [S_ERROR, allProcesses[proc]["Status"][4], rt], lg)
         raise Exception("Duplicate launch ack for %s on %s. PID: %s." % (proc, host, pid))
     elif pid < 0:
         updateStatus(
             allProcesses,
-            allHosts,
             proc,
             [S_FAILED, rt, rt],
-            dt,
             lg
         )
     else:
         updateStatus(
             allProcesses,
-            allHosts,
             proc,
             [
                 S_RUNNING,
                 host,
                 pid,
-                allProcesses[proc].get("SignalAfter", datetime.time.max) \
-                    < rt.time(),
+                allProcesses[proc].get("SignalAfter", datetime.time.max) < rt.time(),
                 rt
             ],
-            dt,
             lg
         )
 
@@ -999,19 +985,15 @@ def handleUpdates(allProcesses, allHosts, host, procReverseMap, doneProcesses, a
             if status == S_RUNNING:
                 updateStatus(
                     allProcesses,
-                    allHosts,
                     proc,
                     [S_RUNNING, host, pid, allProcesses[proc].get("SignalAfter", datetime.time.max) < rt.time(), rt],
-                    dt,
                     lg
                 )
             else:
                 updateStatus(
                     allProcesses,
-                    allHosts,
                     proc,
                     [status, ort, rt],
-                    dt,
                     lg
                 )
             lg.info("Updated status of %s on %s to %s." % (proc, host, STATUS_MAP[status]))
@@ -1047,14 +1029,9 @@ def handleUpdates(allProcesses, allHosts, host, procReverseMap, doneProcesses, a
                 traceback.format_exc(200)
             ))
 
-def updateStatus(allProcesses, allHosts, proc, s, dt, lg):
+def updateStatus(allProcesses, proc, s, lg):
     lg.info("updating status of %s to %s" % (proc, s))
-    oldStatus = allProcesses[proc]["Status"]
     allProcesses[proc]["Status"] = s
-    host = HOST_MAP.get(
-        allProcesses[proc]["HostClass"],
-        allProcesses[proc]["HostClass"]
-    )
     return 0
 
 def kill_proc(req, allProcesses, allHosts, rt, dt, lg):
@@ -1084,10 +1061,8 @@ def kill_proc(req, allProcesses, allHosts, rt, dt, lg):
                 ort = datetime.time.min
             return updateStatus(
                 allProcesses,
-                allHosts,
                 req,
                 [S_FAILED, ort, rt],
-                dt,
                 lg
             )
     return 1
@@ -1115,10 +1090,7 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                 T_SUSPEND_DEPS
             ):
                 st = allProcesses[req]["Status"]
-                host = HOST_MAP.get(
-                    allProcesses[req]["HostClass"],
-                    allProcesses[req]["HostClass"]
-                )
+                host = allProcesses[req]["HostClass"]
             if T_PROCLIST == t:
                 lg.info("sending process list")
                 wwq.put((T_PROCLIST, allProcesses, allHosts, doneProcesses))
@@ -1143,14 +1115,12 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                     if f:
                         updateStatus(
                             allProcesses,
-                            allHosts,
                             req,
                             [iif(
                                 host in allHosts,
                                 S_WAITING,
                                 S_UNRUNNABLE
                             )],
-                            dt,
                             lg
                         )
                         doneProcesses -= set([req])
@@ -1174,10 +1144,8 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                     if f:
                         updateStatus(
                             allProcesses,
-                            allHosts,
                             req,
                             [S_CANCELED, rt],
-                            dt,
                             lg
                         )
                         doneProcesses |= set([req])
@@ -1192,10 +1160,8 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                 if req in allProcesses:
                     updateStatus(
                         allProcesses,
-                        allHosts,
                         req,
                         [S_SUSPENDED, rt],
-                        dt,
                         lg
                     )
                     doneProcesses -= set([req])
@@ -1205,10 +1171,8 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                     and allProcesses[req]["Status"][0] == S_MANUAL:
                     updateStatus(
                         allProcesses,
-                        allHosts,
                         req,
                         [S_MANUAL, 0, rt],
-                        dt,
                         lg
                     )
             elif T_SUSPEND_DEPS == t and st[0] in (S_FAILED, S_SUSPENDED, S_MANUAL):
@@ -1241,10 +1205,8 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                         if dep in allProcesses:
                             updateStatus(
                                 allProcesses,
-                                allHosts,
                                 dep,
                                 [S_SUSPENDED, rt],
-                                dt,
                                 lg
                             )
                             doneProcesses -= set([dep])
@@ -1254,21 +1216,15 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                         if dep in allProcesses:
                             updateStatus(
                                 allProcesses,
-                                allHosts,
                                 dep,
                                 [S_UNRUNNABLE, rt],
-                                dt,
                                 lg
                             )
                             doneProcesses -= set([dep])
             elif T_INIT == t:
                 httpd.server_close()
                 lg.info(' '.join(sys.argv))
-                os.execv(
-                    '/usr/local/bin/python',
-                    [PYTHON]+
-                    list(sys.argv)
-                )
+                os.execv(PYTHON, [PYTHON]+sys.argv)
                 sys.exit(0)
             else:
                 lg.info("received %s" % req)
@@ -1290,24 +1246,14 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                     )
                     allHosts[host] = s
                     for (proc, v) in sortedProcesses:
-                        if S_UNRUNNABLE == v["Status"][0] \
-                            and host == HOST_MAP.get(
-                                v["HostClass"],
-                                v["HostClass"]
-                        ):
+                        if S_UNRUNNABLE == v["Status"][0] and host == v["HostClass"]:
                             updateStatus(
                                 allProcesses,
-                                allHosts,
                                 proc,
                                 [S_WAITING],
-                                dt,
                                 lg
                             )
-                        elif S_DETACHED == v["Status"][0] \
-                            and host == HOST_MAP.get(
-                                v["HostClass"],
-                                v["HostClass"]
-                        ):
+                        elif S_DETACHED == v["Status"][0] and host == v["HostClass"]:
                             (host, spid) = v["Status"][2].split(":")
                             pid = int(spid)
                             lg.info("pid %s children %s" % (
@@ -1317,10 +1263,8 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                             if pid in children:
                                 updateStatus(
                                     allProcesses,
-                                    allHosts,
                                     proc,
                                     [S_RUNNING, host, pid, 0, v["Status"][1]],
-                                    dt,
                                     lg
                                 )
                             else:
@@ -1330,10 +1274,8 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                                     ort = datetime.time.min
                                 updateStatus(
                                     allProcesses,
-                                    allHosts,
                                     proc,
                                     [S_FAILED, ort, rt],
-                                    dt,
                                     lg
                                 )
                     lg.info("registered new host: %s" % host)
@@ -1356,7 +1298,7 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                     (st, host, pid, sigStatus, startTime) = v["Status"]
                     if type(pid) is not int:
                         lg.warn("non-int PID for process %s: %s" % (proc, pid))
-                        updateStatus(allProcesses, allHosts, proc, [S_ERROR, startTime, rt], dt, lg)
+                        updateStatus(allProcesses, proc, [S_ERROR, startTime, rt], lg)
                         continue
                     if host not in procReverseMap:
                         procReverseMap[host] = {}
@@ -1400,17 +1342,12 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                     del allHosts[host]
                     detached_set = {}
                     for (proc, v) in sortedProcesses:
-                        if host == HOST_MAP.get(
-                            v["HostClass"],
-                            v["HostClass"]
-                        ):
+                        if host == v["HostClass"]:
                             if S_WAITING == v["Status"][0]:
                                 updateStatus(
                                     allProcesses,
-                                    allHosts,
                                     proc,
                                     [S_UNRUNNABLE],
-                                    dt,
                                     lg
                                 )
                             elif S_RUNNING == v["Status"][0]:
@@ -1422,10 +1359,8 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                                     ort = datetime.time.min
                                 updateStatus(
                                     allProcesses,
-                                    allHosts,
                                     proc,
                                     [S_DETACHED, rt, hostport],
-                                    dt,
                                     lg
                                 )
                     if detached_set:
@@ -1457,16 +1392,14 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                 and v.get("StartAfter", datetime.time.min) < rt.time() \
                 and not v.get("Depends", set([])) - doneProcesses
             ):
-                host = HOST_MAP.get(v["HostClass"], v["HostClass"])
+                host = v["HostClass"]
                 lg.info("ready to launch: %s" % proc)
                 if host in allHosts:
                     if v.get("Manual", 0) and not v["Status"][0] == S_MANUAL:
                         updateStatus(
                             allProcesses,
-                            allHosts,
                             proc,
                             [S_MANUAL, 1, rt],
-                            dt,
                             lg
                         )
                         continue
@@ -1477,10 +1410,8 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                             ):
                         updateStatus(
                             allProcesses,
-                            allHosts,
                             proc,
                             [S_MANUAL, -1, v["Status"][2]],
-                            dt,
                             lg
                         )
                         if v.get("Notify"):
@@ -1522,7 +1453,7 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                             raise Exception("ill-formed launch ack for %s: %s" % (proc, p))
 
                     except Exception as e:
-                        updateStatus(allProcesses, allHosts, proc, [S_ERROR, rt, rt], dt, lg)
+                        updateStatus(allProcesses, proc, [S_ERROR, rt, rt], lg)
                         lg.error("launch failed: %s\n%s" % (
                             e.__str__(),
                             traceback.format_exc(200)
@@ -1539,7 +1470,7 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                                 "\n".join(data.split("\n")[-50:])
                             )
                         except Exception as e:
-                            lg.error( "email failed: %s" % e.__str__() )
+                            lg.error("email failed: %s" % e.__str__() )
 
             if (
                 S_RUNNING == v["Status"][0] \
@@ -1569,10 +1500,8 @@ def core(allProcesses, allHosts, wrq, wwq, srq, swq, dt, httpd, ddt, lg):
                         ))
                         updateStatus(
                             allProcesses,
-                            allHosts,
                             proc,
                             [S_RUNNING, host, pid, 1, rt],
-                            dt,
                             lg
                         )
                     except TypeError as e:
@@ -1696,23 +1625,23 @@ def slave(dt, master, master_host, log_to_file=True):
                     lg.info("launching %s" % v["Command"])
                     command = v["Command"].split()
                     os.chdir(PYTHONPATH)
-                    fh = open(
+                    with open(
                         "%s/%s.log" % (PROC_LOGS, proc),
                         "w"
-                    )
-                    sys.stdout = fh
-                    env = os.environ
-                    env.update({"LOCATION": loc, "RUNDATE": str(rundate), })
+                    ) as fh:
+                        sys.stdout = fh
+                        env = os.environ
+                        env.update({"LOCATION": loc, "RUNDATE": str(rundate), })
 
-                    sp = subprocess.Popen(
-                        command,
-                        stdout = fh,
-                        stderr = fh,
-                        env = env
-                    )
-                    data = (requestTimestamp, sp.pid)
-                    if data[1] > 0:
-                        children |= set([sp])
+                        sp = subprocess.Popen(
+                            command,
+                            stdout = fh,
+                            stderr = fh,
+                            env = env
+                        )
+                        data = (requestTimestamp, sp.pid)
+                        if data[1] > 0:
+                            children |= set([sp])
                 except Exception as e:
                     lg.warn("request failed: %s" % e.__str__())
                     data = (requestTimestamp, -1) 
