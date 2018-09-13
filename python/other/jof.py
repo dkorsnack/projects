@@ -33,9 +33,8 @@ from Cards import Holdem
 
 def main(args):
 
-    fh = open("holdem.csv", 'r')
-    data = [l.split(",")[0:2] for l in fh.readlines()]
-    fh.close()
+    with open("holdem.csv", 'r') as fh:
+        data = [l.split(",")[0:2] for l in fh.readlines()]
 
     headsup = sorted([(float(v),k) for (k,v) in data], reverse=True)
     H = Holdem()

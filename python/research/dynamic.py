@@ -1,5 +1,6 @@
 #!/usr/local/bin/python3
 
+import os
 import sys
 import datetime
 import numpy as np
@@ -16,10 +17,12 @@ np.set_printoptions(
     formatter={'float': '{: 8.2f}'.format},
 )
 
-N=0
-EW=None
-SCALE=252
-(DSD,RSD,RED)=(None,None,None)
+
+PATH = os.environ['PYTHONPATH']+'/research'
+N = 0
+EW = None
+SCALE = 252
+(DSD,RSD,RED) = (None,None,None)
 
 plot_str = r'{0}: {1:0.2f}%, $\mu$={2:0.2f}%, $\wedge$={3:0.2f}%, $\vee$={4:0.2f}%'
 
@@ -87,25 +90,28 @@ def edge_data(csvs):
     import pandas_datareader.data as pdd
     ed = datetime.date.today()-datetime.timedelta(days=1)
     if not csvs:
-        p = subprocess.Popen('ls *.csv', stdout=subprocess.PIPE, shell=True)
+        p = subprocess.Popen(
+            'ls '+PATH+'/*.csv', stdout=subprocess.PIPE, shell=True
+        )
         (output, err) = p.communicate()
-        csvs = output.decode().split('.csv\n')[:-1]
+        csvs = [
+            o.strip(PATH)[:-1]
+            for o in output.decode().split("\n")[:-1]
+        ]
     else:
         csvs = csvs.split(',')
     for csv in csvs:
-        fl = open(csv+'.csv')
-        raw = fl.readlines()
-        fl.close()
+        path = PATH+'/'+csv+'.csv'
+        with open(path) as fl:
+            raw = fl.readlines()
         begin = raw[-1].split(',')[0]
         sd = datetime.datetime.strptime(begin, '%Y-%m-%d').date()+datetime.timedelta(1)
         print(csv, sd, ed)
         try:
             all_data = pdd.DataReader(csv, 'yahoo', start=sd, end=ed)
             lines = '\n'.join(all_data.to_csv().split('\n')[1:])
-            print(lines[-5:])
-            fl = open(csv+'.csv', 'a')
-            fl.write(lines)
-            fl.close()
+            with open(path, 'a') as fl:
+                fl.write(lines)
             print("WROTE ", csv)
         except Exception as e:
             print(e)
@@ -162,7 +168,7 @@ def collect_data(csvs, intraday=False, ret=True):
     securities = []
     for csv in csvs:
         security = pd.read_csv(
-            csv+'.csv',
+            PATH+'/'+csv+'.csv',
             usecols=col_names,
             parse_dates=['Date'],
             index_col='Date',
