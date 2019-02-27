@@ -17,7 +17,6 @@ np.set_printoptions(
     formatter={'float': '{: 8.2f}'.format},
 )
 
-
 PATH = os.environ['PYTHONPATH']+'/research'
 N = 0
 EW = None
@@ -55,10 +54,7 @@ def describe(rs, tag, window, intraday):
     for (i,j) in cmbns:
         rho[i+'-'+j] = cor[i][j]
     div = pd.DataFrame()
-    div['Div'] = cov['C'].apply(
-        lambda c: 1-ew.dot(c.dot(ew))/ew.dot(c.diagonal())
-    )
-    div['Avg Corr'] = cov['R'].apply(lambda r: ew.dot(r.dot(ew)))
+    div['Avg Corr'] = cov['R'].apply(lambda r: r.sum()/M**2)
     div['# of Bets'] = cov['C'].apply(lambda c: effective_bets(c))
     line_plot(
         div[RSD:RED],
@@ -125,15 +121,11 @@ def generate_C(rs, window):
     last_v = last_cov.diagonal()**0.5
     last_i = last_v.reshape(N,1)**-1
     last_c = last_i*last_cov*last_i.T
-    div_n = 100*SCALE**0.5*EW.dot(last_cov.dot(EW))**0.5
-    div_d = 100*SCALE**0.5*EW.dot(last_v)
     print('VOL:')
     print(100*SCALE**0.5*last_v)
     print('COR:')
     for c in last_c:
         print(100*c)
-    print('DIV:')
-    print(np.array([div_n, div_d, 100*(1-div_n/div_d)]))
     return cov['C']
 
 def diversify(rs, window, optimization, vol_center, max_leverage=2):
@@ -222,9 +214,9 @@ def backtest(
     else:
         benchmark = 'Static (EW)'
         rs[benchmark] = sum([rs[csvs[i]]/N for i in range(N)])
-    rs['Dynamic'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
+    rs['Backtest'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
     describe(rs[csvs], '', window, intraday)
-    describe(rs[[benchmark,'Dynamic']], 'd', window, intraday)
+    describe(rs[[benchmark,'Backtest']], 'd', window, intraday)
     return 0
 
 def parseOptions(args):
@@ -234,13 +226,14 @@ def parseOptions(args):
         '--window',
         dest='window',
         type=int,
+        default=100,
     )
     p.add_option(
         '-v',
         '--vol_center',
         dest='vol_center',
         type=int,
-        default=0,
+        default=10,
     )
     p.add_option(
         '-e',
@@ -253,31 +246,32 @@ def parseOptions(args):
         '-c',
         '--csvs',
         dest='csvs',
-        default=None,
+        default="SPY,IEF",
     )
     p.add_option(
         '-i',
         '--intraday',
-        action='store_true',
-        default=False,
+        dest="intraday",
+        default=1,
+        type=int,
     )
     p.add_option(
         '-s',
         '--static',
         dest='static',
-        default='',
+        default='VBINX',
     )
     p.add_option(
         '-o',
         '--optimization',
         dest='optimization',
-        default="MV",
+        default="RB:3,1",
     )
     p.add_option(
         '-d',
         '--dates',
         dest='dates',
-        default='',
+        default='1990-01-01/1990-01-01/2020-01-01',
         help='data_start/report_start/report_end',
     )
     (o,a) = p.parse_args(args)
@@ -285,12 +279,19 @@ def parseOptions(args):
 
 def main(args):
     o = parseOptions(args)
+    params = "|"+"|".join([
+        "c."+o.csvs,
+        "s."+o.static,
+        "w."+str(o.window)+("i" if o.intraday else ""),
+        "o."+o.optimization,
+        "v."+str(o.vol_center),
+    ])+"|"
     print(o)
     if o.edge:
         edge_data(o.csvs)
         return
     csvs = o.csvs.split(',') 
-    global N, EW, SCALE, DSD, RSD
+    global N, EW, SCALE
     if o.dates:
         DSD, RSD, RED = o.dates.split("/")
     if o.intraday:
@@ -325,6 +326,20 @@ def main(args):
         float(o.vol_center)/100,
         o.static,
     )
+    with open("backtest.tex", "r") as fl, open("bt.tex", "w") as nfl:
+        ofl = []
+        for line in fl:
+            if "BT-PARAMS" in line:
+                line = line.replace("BT-PARAMS", params)
+            if "DATES" in line:
+                line = line.replace("DATES", o.dates)
+            ofl.append(line)
+        nfl.write("\n".join(ofl))
+    os.system((
+        "pdflatex bt.tex && "
+        "mv bt.pdf backtest.pdf && "
+        "rm *.png *.aux *.out *.log"
+    ))
     return
 
 if __name__ == '__main__':

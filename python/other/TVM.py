@@ -1,18 +1,16 @@
-#!/bin/bash
-
-'''
-A TVM object works like a financial calculator. (Literally. I implemented this
-using the Texas Instruments BAII Plus Financial Calculator's instruction manual.)
-Given any four of (n, i, pmt, pv, fv) TVM object can calculate the fifth.
-
->>> TVM(n=36, pv=6000, pmt=-200, fv=0).i*12
-0.122489388032796
-'''
-
 from math import log
 from lib.LogFile import LogFile
 
 class TVM (object):
+    '''
+    A Time Value of Money object works like a financial calculator. (Literally,
+    I implemented this using the Texas Instruments BAII Plus Financial Calculator's
+    instruction manual.) Given any four of {n, i, pmt, pv, fv} TVM object can
+    calculate the fifth. For example:
+
+    >>> TVM(n=36, pv=6000, pmt=-200, fv=0).i*12
+    0.122489388032796
+    '''
 
     def __init__(
         self,

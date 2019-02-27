@@ -142,7 +142,7 @@ def naive_risk_parity(C):
 def main(args):
     # Daily ~1988-2017 [SPX, HYG, TLT, LQD]
     if len(args) < 2:
-        n = 4
+        """
         B = np.array([0.6, 0.2, 0.1, 0.1])
         C = np.array([
             [ 2.382e-04,  4.345e-05, -1.667e-05,  3.112e-06],
@@ -150,6 +150,24 @@ def main(args):
             [-1.667e-05, -8.001e-06,  1.428e-04,  1.590e-05],
             [ 3.112e-06,  1.197e-05,  1.590e-05,  2.521e-05],
         ])
+        """
+        """
+        B = np.array([0.25]*4)
+        s = 252**0.5
+        (a,b,c,d) = (0.24/s, 0.15/s, 0.02/s, 0.0125/s)
+        C = np.array([
+            [1*a*a, -0.2*a*b, 0, 0],
+            [-0.2*a*b, 1*b*b, 0, 0],
+            [0, 0, 1*c*c, 0],
+            [0, 0, 0, 1*d*d],
+        ])
+        """
+        B = np.array([0.6, 0.4])
+        C = np.array([
+            [0.04, 0],
+            [0, 0.01],
+        ])
+        n = len(B)
     else:
         n = int(args[1])
         o = np.random.normal(0, 0.005, size=(n,n))

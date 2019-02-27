@@ -31,9 +31,8 @@ for r in range(1, 9):
                      for i in range(len(STARTING_HANDS))]))
 
 
-fh = open("holdem.pkl", 'wb')
-pickle.dump(ALL, fh)
-fh.close()
+with open("holdem.pkl", 'wb') as fh:
+    pickle.dump(ALL, fh)
 
 # graphical representations
 from numpy import array
@@ -41,9 +40,8 @@ from mpl_toolkits.mplot3d.axes3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 
-ff = open("holdem.pkl", "r")
-ALL = pickle.load(ff)
-ff.close()
+with open("holdem.pkl", "r") as ff:
+    ALL = pickle.load(ff)
 
 fig = plt.figure()
 ax = Axes3D(fig)

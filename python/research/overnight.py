@@ -26,15 +26,18 @@ def main(args):
             csv+".csv",
             parse_dates=['Date'],
             index_col='Date'
-        )
+        ).loc["1996-01-01":]
+        line_plot(security['Close']/security['Open']-1, csv+'d.png')
         security['lOpen'] = np.log(security['Open']).shift(-1)
         security['lClose'] = np.log(security['Close'])
         security['sClose'] = security['lClose'].shift(-1)
         security["cto"] = security["lOpen"]-security["lClose"]
         security["otc"] = security["sClose"]-security["lOpen"]
         security["ctc"] = security["sClose"]-security["lClose"]
-        security["ata"] = np.log(security["Adj Close"]).diff()
-        dudes = security[["cto", "otc", "ctc", "ata"]].dropna()
+        print(security.tail())
+        #security["ata"] = np.log(security["Adj Close"]).diff()
+        #dudes = security[["cto", "otc", "ctc", "ata"]].dropna()
+        dudes = security[["cto", "otc", "ctc"]].dropna()
         print(len(dudes), (dudes == 0).sum())
         cum_ret_plot(dudes, csv+".png", 252)
         scatter(
