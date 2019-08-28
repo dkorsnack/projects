@@ -5,7 +5,7 @@ import sys
 from itertools import combinations
 
 def calc(B):
-    P = [1/(1+b) if b>0 else b/(b-1) for b in B]
+    P = [100/(100+b) if b>0 else b/(b-100) for b in B]
     sm = sum(P)
     Q = [p/sm for p in P]
     F = [(1-q)/q if q<0.5 else q/(q-1) for q in Q]

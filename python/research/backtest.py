@@ -25,7 +25,7 @@ SCALE = 252
 
 plot_str = r'{0}: {1:0.2f}%, $\mu$={2:0.2f}%, $\wedge$={3:0.2f}%, $\vee$={4:0.2f}%'
 
-def describe(rs, tag, window, intraday):
+def describe(rs, tag, window):
     cum_ret_plot(rs[RSD:RED], 'cr'+tag+'.png', SCALE)
     drawdown_plot(rs[RSD:RED], 'dd'+tag+'.png')
     roll = rs.rolling(window=window)
@@ -128,14 +128,15 @@ def generate_C(rs, window):
         print(100*c)
     return cov['C']
 
-def diversify(rs, window, optimization, vol_center, max_leverage=2):
+def diversify(rs, window, optimization, vol_center, max_leverage=3):
     keys = rs.keys()
     cov = generate_C(rs, window)
     last_c = cov.values[-1]
     if vol_center:
+        vc = float(vol_center)/100
         def function(C):
             w = optimization(C)
-            l = vol_center/(SCALE**0.5*w.dot(C.dot(w))**0.5)
+            l = vc/(SCALE**0.5*w.dot(C.dot(w))**0.5)
             if np.all(w == EW):
                 return EW
             else:
@@ -155,7 +156,7 @@ def diversify(rs, window, optimization, vol_center, max_leverage=2):
         df[keys[i]] = xx.apply(lambda x: x[i])
     return df
 
-def collect_data(csvs, intraday=False, ret=True):
+def collect_data(csvs, intraday, ret=True):
     col_names=['Date','Open','Close','Adj Close']
     securities = []
     for csv in csvs:
@@ -215,8 +216,8 @@ def backtest(
         benchmark = 'Static (EW)'
         rs[benchmark] = sum([rs[csvs[i]]/N for i in range(N)])
     rs['Backtest'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
-    describe(rs[csvs], '', window, intraday)
-    describe(rs[[benchmark,'Backtest']], 'd', window, intraday)
+    describe(rs[csvs], '', window)
+    describe(rs[[benchmark,'Backtest']], 'd', window)
     return 0
 
 def parseOptions(args):
@@ -232,8 +233,7 @@ def parseOptions(args):
         '-v',
         '--vol_center',
         dest='vol_center',
-        type=int,
-        default=10,
+        default="10",
     )
     p.add_option(
         '-e',
@@ -246,14 +246,14 @@ def parseOptions(args):
         '-c',
         '--csvs',
         dest='csvs',
-        default="SPY,IEF",
+        default="SPY,TLT",
     )
     p.add_option(
         '-i',
         '--intraday',
         dest="intraday",
-        default=1,
-        type=int,
+        action="store_false",
+        default=True,
     )
     p.add_option(
         '-s',
@@ -291,7 +291,7 @@ def main(args):
         edge_data(o.csvs)
         return
     csvs = o.csvs.split(',') 
-    global N, EW, SCALE
+    global DSD, RSD, RED, N, EW, SCALE
     if o.dates:
         DSD, RSD, RED = o.dates.split("/")
     if o.intraday:
@@ -323,7 +323,7 @@ def main(args):
         o.intraday,
         o.window,
         optimization,
-        float(o.vol_center)/100,
+        o.vol_center,
         o.static,
     )
     with open("backtest.tex", "r") as fl, open("bt.tex", "w") as nfl:
