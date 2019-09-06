@@ -22,6 +22,7 @@ N = 0
 EW = None
 SCALE = 252
 (DSD,RSD,RED) = (None,None,None)
+VIX = None
 
 plot_str = r'{0}: {1:0.2f}%, $\mu$={2:0.2f}%, $\wedge$={3:0.2f}%, $\vee$={4:0.2f}%'
 
@@ -78,6 +79,7 @@ def describe(rs, tag, window):
         ],
     )
     vol = 100*roll.std()*SCALE**0.5
+    #vol['^VIX'] = VIX
     volatility_plot(vol[RSD:RED], 'v'+tag+'.png')
     return
 
@@ -116,45 +118,50 @@ def edge_data(csvs):
 def generate_C(rs, window):
     roll = rs.rolling(window=window)
     cov = roll.cov().unstack(level=1)
-    cov['C'] = [x.reshape(N,N) for x in cov.values]
-    last_cov = cov['C'].values[-1]
-    last_v = last_cov.diagonal()**0.5
-    last_i = last_v.reshape(N,1)**-1
-    last_c = last_i*last_cov*last_i.T
+    rho = roll.corr().unstack(level=1)
+    df = pd.DataFrame()
+    df['C'] = [c.reshape(N,N) for c in cov.values]
+    df['R'] = [r.reshape(N,N) for r in rho.values]
+    df.index = cov.index
     print('VOL:')
-    print(100*SCALE**0.5*last_v)
+    print(100*SCALE**0.5*df.C.values[-1].diagonal()**0.5)
     print('COR:')
-    for c in last_c:
-        print(100*c)
-    return cov['C']
+    for r in df.R.values[-1]:
+        print(100*r)
+    return df[['C','R']]
 
 def diversify(rs, window, optimization, vol_center, max_leverage=3):
     keys = rs.keys()
-    cov = generate_C(rs, window)
-    last_c = cov.values[-1]
+    df = generate_C(rs, window)
+    df['X'] = [EW]+[optimization(C) for C in df.C.shift().dropna()]
+    df['V'] = [SCALE**0.5*w.dot(c.dot(w))**0.5 for (w,c) in zip(df.X, df.C)]
     if vol_center:
-        vc = float(vol_center)/100
-        def function(C):
-            w = optimization(C)
-            l = vc/(SCALE**0.5*w.dot(C.dot(w))**0.5)
-            if np.all(w == EW):
-                return EW
-            else:
-                return min(max_leverage,l)*w
-    else:
-        def function(C):
-            return optimization(C)
-    xx = cov.shift().dropna().apply(function)
-    last_x = xx.values[-1]
+        vc = vol_center
+        df['L'] = [
+            1 if np.isnan(v) else min(max_leverage, vc/v)
+            for v in df.V.shift()
+        ]
+        """
+        df['VIX'] = VIX.shift()
+        df['L'] = [vol_center/v for v in df.VIX]
+        """
+        """
+        df['VIX'] = VIX
+        df['L'] = [1]+[
+            vol_center/(v*r.mean()**0.5)
+            for (_,v,r) in df[['VIX','R']].shift().dropna().to_records()
+        ]
+        """
+        df['X'] *= df.L
+        df['V'] = [
+            SCALE**0.5*w.dot(c.dot(w))**0.5 for (w,c) in zip(df.X, df.C)
+        ]
     print('EXP:')
-    print(100*last_x)
-    print('pVOL: {0: 0.2f}%'.format(
-        100*SCALE**0.5*last_x.dot(last_c.dot(last_x))**0.5
-    ))
-    df = pd.DataFrame()
+    print(100*df.X.values[-1])
+    print('pVOL: {0: 0.2f}%'.format(100*df.V.values[-1]))
     for i in range(N):
-        df[keys[i]] = xx.apply(lambda x: x[i])
-    return df
+        df[keys[i]] = [x[i] for x in df.X.values]
+    return df[keys]
 
 def collect_data(csvs, intraday, ret=True):
     col_names=['Date','Open','Close','Adj Close']
@@ -174,7 +181,7 @@ def collect_data(csvs, intraday, ret=True):
             op.index = [dt.replace(hour=9, minute=30) for dt in op.index]
             sec = pd.DataFrame(pd.concat([op[csv+'_Adj Close'], security[csv+'_Adj Close']]).sort_index())
         else:
-            sec = security[csv+'_Adj Close'].to_frame()
+            sec = security[[csv+'_Adj Close']]
         sec.columns = [csv]
         securities.append(sec)
     assets = securities[0].join(securities[1:], how='inner')
@@ -182,16 +189,6 @@ def collect_data(csvs, intraday, ret=True):
         return assets[csvs].pct_change().dropna()
     else:
         return assets[csvs]
-
-def ensemble_vol(n=4):
-    rng = [i for i in range(n)]
-    weights = np.array([1./n]*n)
-    df = pd.DataFrame(np.random.randn(50,n)/100)
-    df['I'] = sum([weights[i]*df[i] for i in rng])
-    C = df[rng].cov()
-    print(100*SCALE**0.5*weights.dot(C.dot(weights))**0.5)
-    print(100*SCALE**0.5*df['I'].std())
-    return
 
 def backtest(
     csvs,
@@ -233,7 +230,8 @@ def parseOptions(args):
         '-v',
         '--vol_center',
         dest='vol_center',
-        default="10",
+        default=0.1,
+        type=float,
     )
     p.add_option(
         '-e',
@@ -291,6 +289,8 @@ def main(args):
         edge_data(o.csvs)
         return
     csvs = o.csvs.split(',') 
+    #global VIX, DSD, RSD, RED, N, EW, SCALE
+    #VIX = collect_data(['^VIX'], o.intraday, False)
     global DSD, RSD, RED, N, EW, SCALE
     if o.dates:
         DSD, RSD, RED = o.dates.split("/")

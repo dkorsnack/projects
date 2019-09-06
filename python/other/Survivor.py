@@ -19,42 +19,42 @@ class Survivor(object):
 
         self.REGSEASON = [
             (1,'GreenBay','Chicago',-3),
-            (1,'Atlanta','Minnesota',-4),
+            (1,'Atlanta','Minnesota',-3.5),
             (1,'Buffalo','NYJets',-3),
-            (1,'Washington','Philadelphia',-9),
-            (1,'Baltimore','Miami',5.5),
-            (1,'SanFrancisco','TampaBay',0),
-            (1,'KansasCity','Jacksonville',4),
+            (1,'Washington','Philadelphia',-10),
+            (1,'Baltimore','Miami',7),
+            (1,'SanFrancisco','TampaBay',1),
+            (1,'KansasCity','Jacksonville',3.5),
             (1,'Tennessee','Cleveland',-6),
             (1,'LARams','Carolina',3),
             (1,'Detroit','Arizona',2.5),
             (1,'Cincinnati','Seattle',-9),
-            (1,'Indianapolis','LAChargers',-7),
-            (1,'NYGiants','Dallas',-7),
-            (1,'Pittsburgh','NewEngland',-6),
-            (1,'Houston','NewOrleans',-7),
-            (1,'Denver','Oakland',0),
+            (1,'Indianapolis','LAChargers',-6.5),
+            (1,'NYGiants','Dallas',-7.5),
+            (1,'Pittsburgh','NewEngland',-5.5),
+            (1,'Houston','NewOrleans',-6.5),
+            (1,'Denver','Oakland',1),
 
-            (2,'TampaBay','Carolina',-5.5),
-            (2,'SanFrancisco','Cincinnati',2),
-            (2,'LAChargers','Detroit',4),
+            (2,'TampaBay','Carolina',-4.5),
+            (2,'SanFrancisco','Cincinnati',2.5),
+            (2,'LAChargers','Detroit',2.5),
             (2,'Minnesota','GreenBay',-3),
-            (2,'Indianapolis','Tennessee',1),
-            (2,'NewEngland','Miami',8.5),
-            (2,'Buffalo','NYGiants',-3),
-            (2,'Seattle','Pittsburgh',-3),
-            (2,'Dallas','Washington',1),
-            (2,'Arizona','Baltimore',-8.5),
-            (2,'Jacksonville','Houston',-3.5),
-            (2,'KansasCity','Oakland',6.5),
-            (2,'Chicago','Denver',-1),
-            (2,'NewOrleans','LARams',-2.5),
-            (2,'Philadelphia','Atlanta',-1),
+            (2,'Indianapolis','Tennessee',-2.5),
+            (2,'NewEngland','Miami',11),
+            (2,'Buffalo','NYGiants',-1.5),
+            (2,'Seattle','Pittsburgh',-3.5),
+            (2,'Dallas','Washington',4.5),
+            (2,'Arizona','Baltimore',-9.5),
+            (2,'Jacksonville','Houston',-3),
+            (2,'KansasCity','Oakland',7),
+            (2,'Chicago','Denver',0),
+            (2,'NewOrleans','LARams',-3),
+            (2,'Philadelphia','Atlanta',0),
             (2,'Cleveland','NYJets',2.5),
 
             (3,'Tennessee','Jacksonville',-3),
             (3,'Cincinnati','Buffalo',-4.5),
-            (3,'Miami','Dallas',-8.5),
+            (3,'Miami','Dallas',-9),
             (3,'Denver','GreenBay',-6.5),
             (3,'Atlanta','Indianapolis',-4),
             (3,'Baltimore','KansasCity',-7),
@@ -286,7 +286,7 @@ class Survivor(object):
 
     def matrix(self):
         mn = self.WEEKS[0]
-        M = np.empty((self.n, len(self.WEEKS),))*np.nan
+        M = np.zeros((self.n, len(self.WEEKS)))
         for t in range(self.n):
             team = self.TEAMS[t]
             for i in self.WEEKS:
@@ -296,17 +296,17 @@ class Survivor(object):
                             M[t][i-mn] = spread
                         elif team == away:
                             if self.home_teams_only:
-                                M[t][i-mn] = np.nan 
+                                M[t][i-mn] = 0.
                             else:
                                 M[t][i-mn] = -spread
         if self.min_spread:
-            M[abs(M) < self.min_spread] = np.nan
+            M[abs(M) < self.min_spread] = 0.
         return M
 
     def solve(self):
         return tuple([
             (self.TEAMS[x], self.M[x,y]) for (x,y) in sorted(
-                zip(*linear_sum_assignment(np.nan_to_num(self.M))), 
+                zip(*linear_sum_assignment(self.M)), 
                 key=lambda y: y[1]
         )])
 
@@ -339,7 +339,7 @@ def parse_args(args):
         '-m',
         '--min_spread',
         dest = 'min_spread',
-        default=0,
+        default=0.,
         type=float,
     )
     (o,a) = p.parse_args(args)
@@ -350,7 +350,7 @@ def main(args):
     title = "|    SUM   MIN   MAX   AVG |"
     sep = "-"*len(title)
     S = Survivor(o.home_teams_only, o.min_spread)
-    print(S)
+    #print(S)
     print(sep+"\n"+title) 
     for i in range(len(S.WEEKS)):
         S = Survivor(o.home_teams_only, o.min_spread, i+1)
