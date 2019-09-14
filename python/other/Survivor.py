@@ -7,7 +7,7 @@ from optparse import OptionParser
 
 np.set_printoptions(
     linewidth = 150,
-    formatter = {'float': lambda x: "%5.1f" % (x,)},
+    formatter = {'float': lambda x: "{:5.1f}".format(x)},
 )
 
 class Survivor(object):
@@ -18,56 +18,56 @@ class Survivor(object):
         self.up_to_week = up_to_week
 
         self.REGSEASON = [
-            (1,'GreenBay','Chicago',-3),
-            (1,'Atlanta','Minnesota',-3.5),
-            (1,'Buffalo','NYJets',-3),
-            (1,'Washington','Philadelphia',-10),
-            (1,'Baltimore','Miami',7),
-            (1,'SanFrancisco','TampaBay',1),
-            (1,'KansasCity','Jacksonville',3.5),
-            (1,'Tennessee','Cleveland',-6),
-            (1,'LARams','Carolina',3),
-            (1,'Detroit','Arizona',2.5),
-            (1,'Cincinnati','Seattle',-9),
-            (1,'Indianapolis','LAChargers',-6.5),
-            (1,'NYGiants','Dallas',-7.5),
-            (1,'Pittsburgh','NewEngland',-5.5),
-            (1,'Houston','NewOrleans',-6.5),
-            (1,'Denver','Oakland',1),
+           #(1,'GreenBay','Chicago',-3),
+           #(1,'Atlanta','Minnesota',-3.5),
+           #(1,'Buffalo','NYJets',-3),
+           #(1,'Washington','Philadelphia',-10),
+           #(1,'Baltimore','Miami',7),
+           #(1,'SanFrancisco','TampaBay',1),
+           #(1,'KansasCity','Jacksonville',3.5),
+           #(1,'Tennessee','Cleveland',-6),
+           #(1,'LARams','Carolina',3),
+           #(1,'Detroit','Arizona',2.5),
+           #(1,'Cincinnati','Seattle',-9),
+           #(1,'Indianapolis','LAChargers',-6.5),
+           #(1,'NYGiants','Dallas',-7.5),
+           #(1,'Pittsburgh','NewEngland',-5.5),
+           #(1,'Houston','NewOrleans',-6.5),
+           #(1,'Denver','Oakland',1),
 
-            (2,'TampaBay','Carolina',-4.5),
-            (2,'SanFrancisco','Cincinnati',2.5),
-            (2,'LAChargers','Detroit',2.5),
+            (2,'TampaBay','Carolina',-7),
+            (2,'SanFrancisco','Cincinnati',-1),
+            (2,'LAChargers','Detroit',1.5),
             (2,'Minnesota','GreenBay',-3),
-            (2,'Indianapolis','Tennessee',-2.5),
-            (2,'NewEngland','Miami',11),
-            (2,'Buffalo','NYGiants',-1.5),
+            (2,'Indianapolis','Tennessee',-3),
+            (2,'NewEngland','Miami',19),
+            (2,'Buffalo','NYGiants',2),
             (2,'Seattle','Pittsburgh',-3.5),
-            (2,'Dallas','Washington',4.5),
-            (2,'Arizona','Baltimore',-9.5),
-            (2,'Jacksonville','Houston',-3),
+            (2,'Dallas','Washington',6),
+            (2,'Arizona','Baltimore',-13),
+            (2,'Jacksonville','Houston',-9),
             (2,'KansasCity','Oakland',7),
-            (2,'Chicago','Denver',0),
-            (2,'NewOrleans','LARams',-3),
-            (2,'Philadelphia','Atlanta',0),
-            (2,'Cleveland','NYJets',2.5),
+            (2,'Chicago','Denver',2),
+            (2,'NewOrleans','LARams',-2),
+            (2,'Philadelphia','Atlanta',2),
+            (2,'Cleveland','NYJets',7),
 
-            (3,'Tennessee','Jacksonville',-3),
-            (3,'Cincinnati','Buffalo',-4.5),
-            (3,'Miami','Dallas',-9),
+            (3,'Tennessee','Jacksonville',2),
+            (3,'Cincinnati','Buffalo',-4),
+            (3,'Miami','Dallas',-16),
             (3,'Denver','GreenBay',-6.5),
-            (3,'Atlanta','Indianapolis',-4),
-            (3,'Baltimore','KansasCity',-7),
-            (3,'Oakland','Minnesota',-7),
-            (3,'NYJets','NewEngland',-10),
-            (3,'Detroit','Philadelphia',-8),
-            (3,'Carolina','Arizona',3),
-            (3,'NYGiants','TampaBay',-3),
-            (3,'Houston','LAChargers',-5.5),
-            (3,'Pittsburgh','SanFrancisco',-1),
-            (3,'NewOrleans','Seattle',1.5),
-            (3,'LARams','Cleveland',2.5),
-            (3,'Chicago','Washington',3),
+            (3,'Atlanta','Indianapolis',-2),
+            (3,'Baltimore','KansasCity',-6),
+            (3,'Oakland','Minnesota',-7.5),
+            (3,'NYJets','NewEngland',-16.5),
+            (3,'Detroit','Philadelphia',-7.5),
+            (3,'Carolina','Arizona',3.5),
+            (3,'NYGiants','TampaBay',-4.5),
+            (3,'Houston','LAChargers',-3.5),
+            (3,'Pittsburgh','SanFrancisco',1.5),
+            (3,'NewOrleans','Seattle',1),
+            (3,'LARams','Cleveland',2),
+            (3,'Chicago','Washington',4.5),
 
             (4,'Philadelphia','GreenBay',-2.5),
             (4,'Tennessee','Atlanta',-5),
@@ -274,7 +274,9 @@ class Survivor(object):
             (16,'KansasCity','Chicago',-1.5),
             (16,'GreenBay','Minnesota',-3),
         ]
-        self.PICKED = tuple()
+        self.PICKED = [
+            'Philadelphia',
+        ]
         week, home, away, spread = list(zip(*self.REGSEASON))
         assert set(home) == set(away), "SOMETHING IS MISSPELLED"
         self.TEAMS = sorted([
@@ -312,19 +314,25 @@ class Survivor(object):
 
     def __str__(self):
         return "\n".join([
-            "%15s %s" % (self.TEAMS[i], self.M[i])
+            "{:>27s} {}".format(self.TEAMS[i], self.M[i])
             for i in range(self.n)
         ])
 
     def suboptimal(self):
-        used, result = [], []
+        used, result = self.PICKED[:], []
         for w in self.WEEKS:
-            dude = sorted([
-                x for x in self.REGSEASON
-                if x[0] == w and x[2] not in used
-            ], key=lambda x: x[-1])[0]
-            used.append(dude[2])
-            result.append(dude[2:])
+            dudes = [
+                (s,h) for (k,a,h,s) in self.REGSEASON
+                if k == w and h not in used
+            ]
+            if not self.home_teams_only:
+                dudes += [
+                    (-s,a) for (k,a,h,s) in self.REGSEASON
+                    if k == w and a not in used
+                ]
+            dude = sorted(dudes)[0]
+            used.append(dude[1])
+            result.append(dude)
         return result
 
 def parse_args(args):
@@ -350,23 +358,23 @@ def main(args):
     title = "|    SUM   MIN   MAX   AVG |"
     sep = "-"*len(title)
     S = Survivor(o.home_teams_only, o.min_spread)
-    #print(S)
+    print(S)
     print(sep+"\n"+title) 
     for i in range(len(S.WEEKS)):
         S = Survivor(o.home_teams_only, o.min_spread, i+1)
         teams, scores = list(zip(*S.solve()))
-        stats = "| %6.1f %5.1f %5.1f %5.1f |" % tuple([
+        stats = "| {:6.1f} {:5.1f} {:5.1f} {:5.1f} |".format(*[
             f(scores) for f in (sum,min,max,np.mean)
         ])
-        print(" ".join([sep]+["%5s" % (team[:5],) for team in teams]))
-        print(" ".join([stats]+["%5.1f" % (score,) for score in scores]))
+        print(" ".join([sep]+["{:5s}".format(team[:5]) for team in teams]))
+        print(" ".join([stats]+["{:5.1f}".format(score) for score in scores]))
     print(sep)
-    teams, scores = list(zip(*S.suboptimal()))
-    stats = "| %6.1f %5.1f %5.1f %5.1f |" % tuple([
+    scores, teams = list(zip(*S.suboptimal()))
+    stats = "| {:6.1f} {:5.1f} {:5.1f} {:5.1f} |".format(*[
         f(scores) for f in (sum,min,max,np.mean)
     ])
-    print(" ".join([sep]+["%5s" % (team[:5],) for team in teams]))
-    print(" ".join([stats]+["%5.1f" % (score,) for score in scores]))
+    print(" ".join([sep]+["{:5s}".format(team[:5]) for team in teams]))
+    print(" ".join([stats]+["{:5.1f}".format(score) for score in scores]))
     print(sep)
     return
 
