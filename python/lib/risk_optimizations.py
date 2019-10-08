@@ -22,7 +22,7 @@ np.set_printoptions(
 )
 
 # individual asset return assumption
-sharpe = 0.5
+sharpe = 1
 
 # risk free rate assumption
 rf = 0
@@ -44,8 +44,7 @@ def optimizer(tag, C, B=None, M=None, **kwargs):
     )
     if len(tag)>2:
         constr += ({'type': 'ineq', 'fun': lambda X: X,},)
-    opt = minimize(
-        {
+    opt = minimize({
             'MV': lambda X: X.dot(C.dot(X))**0.5,
             'MC': lambda X: X.dot(C.dot(X)),
             'MD': lambda X: X.dot(C.dot(X))/X.dot(C.diagonal())-1.,
@@ -65,6 +64,8 @@ def cov_to_corr(C):
     I = V.reshape(C.shape[0],1)**-1
     return I*C*I.T
 
+def corr_to_cov(R,V):
+    return R*np.outer(V,V)
 
 def pprint(tag, C, X=None):
     pstr = "%2s %3s: %s %8.2f"
@@ -140,9 +141,9 @@ def naive_risk_parity(C):
     return V/sum(V)
 
 def main(args):
-    # Daily ~1988-2017 [SPX, HYG, TLT, LQD]
     if len(args) < 2:
-        n = 4
+        """
+        # Daily ~1988-2017 [SPX, HYG, TLT, LQD]
         B = np.array([0.6, 0.2, 0.1, 0.1])
         C = np.array([
             [ 2.382e-04,  4.345e-05, -1.667e-05,  3.112e-06],
@@ -150,11 +151,27 @@ def main(args):
             [-1.667e-05, -8.001e-06,  1.428e-04,  1.590e-05],
             [ 3.112e-06,  1.197e-05,  1.590e-05,  2.521e-05],
         ])
+        n = len(B)
+        """
+        n = 4
+        s = 252**0.5
+        # TB, MB, CB
+        #B = np.ones(n)
+        B = np.array([0.95, .05/3, .05/3, .05/3])
+        V = np.array([0.15,0.02, 0.04, 0.05])/s
+        R = np.array([
+            [1,0,0,0],
+            [0,1,0.35,0.25],
+            [0,0.35,1,0.2],
+            [0,0.25,0.2,1],
+        ])
+        C = corr_to_cov(R,V)
     else:
         n = int(args[1])
         o = np.random.normal(0, 0.005, size=(n,n))
         B = np.ones(n)/n
         C = np.dot(o, o.T)
+    e,v = np.linalg.eigh(C)
     pprint("   ", C, None)
     pprint("EW ", C, np.ones(n)/n)
     pprint("MV ", C, min_var(C))

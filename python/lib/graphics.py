@@ -43,8 +43,10 @@ def line_plot(data, handle, **kwargs):
         fig.axhline_plot(y=kwargs['hline_plot'], color='black', line_plotwidth=1)
     if 'logy' in kwargs:
         fig.minorticks_off()
+    if 'minor' in kwargs:
+        fig.grid(True, which='minor')
     fig.set_xlabel('Date')
-    fig.get_figure().savefig(handle)
+    fig.get_figure().savefig(handle, bbox_inches='tight')
     print('line_plot '+handle)
     plt.clf()
 
@@ -96,7 +98,7 @@ def scatter(x, y, handle, **kwargs):
         generate_eigen(x,y)
     plt.legend(legend, loc='best', fontsize=FONTSIZE)
     plt.grid(True)
-    plt.savefig(handle)
+    plt.savefig(handle, bbox_inches='tight')
     print('scatter '+handle)
     plt.clf()
 
@@ -124,7 +126,7 @@ def histogram(data, handle, **kwargs):
         handlelength=0,
     )
     fig.yaxis.set_major_formatter(ScalarFormatter())
-    fig.get_figure().savefig(handle)
+    fig.get_figure().savefig(handle, bbox_inches='tight')
     print('histogram '+handle)
     plt.clf()
 
@@ -138,7 +140,7 @@ def probability_plot(x, handle, **kwargs):
     ax.get_lines()[0].set_markersize(4)
     if 'ylim' in kwargs:
         plt.ylim(kwargs['ylim'])
-    plt.savefig(handle)
+    plt.savefig(handle, bbox_inches='tight')
     print('probability_plot '+handle)
     plt.clf()
 
@@ -149,7 +151,7 @@ def acorr_plot(data, handle, **kwargs):
         plt.title(kwargs['title'])
     if 'xlim' in kwargs:
         plt.xlim(kwargs['xlim'])
-    fig.savefig(handle)
+    fig.savefig(handle, bbox_inches='tight')
     print('acorr_plot '+handle)
     fig.clf()
 
@@ -181,7 +183,6 @@ def cum_ret_plot(rs, handle, scale, **kwargs):
         ylabel='Growth of $1 (Log Scale)',
         title='Cumulative Performance',
         yticklabels=range(1, int(np.ceil(cum.max().max())+1)),
-        minor=True,
         legend = cum_ret_legend(cum, rs, scale),
         **kwargs
     )
@@ -194,7 +195,6 @@ def drawdown_plot(rs, handle, **kwargs):
         handle,
         ylabel='Drawdown %',
         title='Drawdowns',
-        minor=True,
         legend = [
             '{0}: {1:0.2f}% [$\wedge$={2:0.2f}]'.format(k, v[-1], v.min())
             for (k,v) in dd.items()

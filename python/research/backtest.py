@@ -1,5 +1,6 @@
 #!/usr/local/bin/python3
 
+import os
 import sys
 import datetime
 import numpy as np
@@ -16,14 +17,16 @@ np.set_printoptions(
     formatter={'float': '{: 8.2f}'.format},
 )
 
-N=0
-EW=None
-SCALE=252
-(DSD,RSD,RED)=(None,None,None)
+PATH = os.environ['PYTHONPATH']+'/research'
+N = 0
+EW = None
+SCALE = 252
+(DSD,RSD,RED) = (None,None,None)
+VIX = None
 
 plot_str = r'{0}: {1:0.2f}%, $\mu$={2:0.2f}%, $\wedge$={3:0.2f}%, $\vee$={4:0.2f}%'
 
-def describe(rs, tag, window, intraday):
+def describe(rs, tag, window):
     cum_ret_plot(rs[RSD:RED], 'cr'+tag+'.png', SCALE)
     drawdown_plot(rs[RSD:RED], 'dd'+tag+'.png')
     roll = rs.rolling(window=window)
@@ -52,10 +55,7 @@ def describe(rs, tag, window, intraday):
     for (i,j) in cmbns:
         rho[i+'-'+j] = cor[i][j]
     div = pd.DataFrame()
-    div['Div'] = cov['C'].apply(
-        lambda c: 1-ew.dot(c.dot(ew))/ew.dot(c.diagonal())
-    )
-    div['Avg Corr'] = cov['R'].apply(lambda r: ew.dot(r.dot(ew)))
+    div['Avg Corr'] = cov['R'].apply(lambda r: r.sum()/M**2)
     div['# of Bets'] = cov['C'].apply(lambda c: effective_bets(c))
     line_plot(
         div[RSD:RED],
@@ -79,6 +79,7 @@ def describe(rs, tag, window, intraday):
         ],
     )
     vol = 100*roll.std()*SCALE**0.5
+    #vol['^VIX'] = VIX
     volatility_plot(vol[RSD:RED], 'v'+tag+'.png')
     return
 
@@ -87,25 +88,28 @@ def edge_data(csvs):
     import pandas_datareader.data as pdd
     ed = datetime.date.today()-datetime.timedelta(days=1)
     if not csvs:
-        p = subprocess.Popen('ls *.csv', stdout=subprocess.PIPE, shell=True)
+        p = subprocess.Popen(
+            'ls '+PATH+'/*.csv', stdout=subprocess.PIPE, shell=True
+        )
         (output, err) = p.communicate()
-        csvs = output.decode().split('.csv\n')[:-1]
+        csvs = [
+            o.strip(PATH)[:-1]
+            for o in output.decode().split("\n")[:-1]
+        ]
     else:
         csvs = csvs.split(',')
     for csv in csvs:
-        fl = open(csv+'.csv')
-        raw = fl.readlines()
-        fl.close()
-        last = raw[-1].split(',')[0]
-        sd = datetime.datetime.strptime(last, '%Y-%m-%d').date()+datetime.timedelta(1)
+        path = PATH+'/'+csv+'.csv'
+        with open(path) as fl:
+            raw = fl.readlines()
+        begin = raw[-1].split(',')[0]
+        sd = datetime.datetime.strptime(begin, '%Y-%m-%d').date()+datetime.timedelta(1)
         print(csv, sd, ed)
         try:
             all_data = pdd.DataReader(csv, 'yahoo', start=sd, end=ed)
             lines = '\n'.join(all_data.to_csv().split('\n')[1:])
-            print(lines[:-1])
-            fl = open(csv+'.csv', 'a')
-            fl.write(lines)
-            fl.close()
+            with open(path, 'a') as fl:
+                fl.write(lines)
             print("WROTE ", csv)
         except Exception as e:
             print(e)
@@ -114,55 +118,57 @@ def edge_data(csvs):
 def generate_C(rs, window):
     roll = rs.rolling(window=window)
     cov = roll.cov().unstack(level=1)
-    cov['C'] = [x.reshape(N,N) for x in cov.values]
-    last_cov = cov['C'].values[-1]
-    last_v = last_cov.diagonal()**0.5
-    last_i = last_v.reshape(N,1)**-1
-    last_c = last_i*last_cov*last_i.T
-    div_n = 100*SCALE**0.5*EW.dot(last_cov.dot(EW))**0.5
-    div_d = 100*SCALE**0.5*EW.dot(last_v)
-    print('VOL:')
-    print(100*SCALE**0.5*last_v)
-    print('COR:')
-    for c in last_c:
-        print(100*c)
-    print('DIV:')
-    print(np.array([div_n, div_d, 100*(1-div_n/div_d)]))
-    return cov['C']
-
-def diversify(rs, window, optimization, vol_center, max_leverage=2):
-    keys = rs.keys()
-    cov = generate_C(rs, window)
-    last_c = cov.values[-1]
-    if vol_center:
-        def function(C):
-            w = optimization(C)
-            l = vol_center/(SCALE**0.5*w.dot(C.dot(w))**0.5)
-            if np.all(w == EW):
-                return EW
-            else:
-                return min(max_leverage,l)*w
-    else:
-        def function(C):
-            return optimization(C)
-    xx = cov.shift().dropna().apply(function)
-    last_x = xx.values[-1]
-    print('EXP:')
-    print(100*last_x)
-    print('pVOL: {0: 0.2f}%'.format(
-        100*SCALE**0.5*last_x.dot(last_c.dot(last_x))**0.5
-    ))
+    rho = roll.corr().unstack(level=1)
     df = pd.DataFrame()
-    for i in range(N):
-        df[keys[i]] = xx.apply(lambda x: x[i])
-    return df
+    df['C'] = [c.reshape(N,N) for c in cov.values]
+    df['R'] = [r.reshape(N,N) for r in rho.values]
+    df.index = cov.index
+    print('VOL:')
+    print(100*SCALE**0.5*df.C.values[-1].diagonal()**0.5)
+    print('COR:')
+    for r in df.R.values[-1]:
+        print(100*r)
+    return df[['C','R']]
 
-def collect_data(csvs, intraday=False, ret=True):
+def diversify(rs, window, optimization, vol_center, max_leverage=3):
+    keys = rs.keys()
+    df = generate_C(rs, window)
+    df['X'] = [EW]+[optimization(C) for C in df.C.shift().dropna()]
+    df['V'] = [SCALE**0.5*w.dot(c.dot(w))**0.5 for (w,c) in zip(df.X, df.C)]
+    if vol_center:
+        vc = vol_center
+        df['L'] = [
+            1 if np.isnan(v) else min(max_leverage, vc/v)
+            for v in df.V.shift()
+        ]
+        """
+        df['VIX'] = VIX.shift()
+        df['L'] = [vol_center/v for v in df.VIX]
+        """
+        """
+        df['VIX'] = VIX
+        df['L'] = [1]+[
+            vol_center/(v*r.mean()**0.5)
+            for (_,v,r) in df[['VIX','R']].shift().dropna().to_records()
+        ]
+        """
+        df['X'] *= df.L
+        df['V'] = [
+            SCALE**0.5*w.dot(c.dot(w))**0.5 for (w,c) in zip(df.X, df.C)
+        ]
+    print('EXP:')
+    print(100*df.X.values[-1])
+    print('pVOL: {0: 0.2f}%'.format(100*df.V.values[-1]))
+    for i in range(N):
+        df[keys[i]] = [x[i] for x in df.X.values]
+    return df[keys]
+
+def collect_data(csvs, intraday, ret=True):
     col_names=['Date','Open','Close','Adj Close']
     securities = []
     for csv in csvs:
         security = pd.read_csv(
-            csv+'.csv',
+            PATH+'/'+csv+'.csv',
             usecols=col_names,
             parse_dates=['Date'],
             index_col='Date',
@@ -175,7 +181,7 @@ def collect_data(csvs, intraday=False, ret=True):
             op.index = [dt.replace(hour=9, minute=30) for dt in op.index]
             sec = pd.DataFrame(pd.concat([op[csv+'_Adj Close'], security[csv+'_Adj Close']]).sort_index())
         else:
-            sec = security[csv+'_Adj Close'].to_frame()
+            sec = security[[csv+'_Adj Close']]
         sec.columns = [csv]
         securities.append(sec)
     assets = securities[0].join(securities[1:], how='inner')
@@ -183,16 +189,6 @@ def collect_data(csvs, intraday=False, ret=True):
         return assets[csvs].pct_change().dropna()
     else:
         return assets[csvs]
-
-def ensemble_vol(n=4):
-    rng = [i for i in range(n)]
-    weights = np.array([1./n]*n)
-    df = pd.DataFrame(np.random.randn(50,n)/100)
-    df['I'] = sum([weights[i]*df[i] for i in rng])
-    C = df[rng].cov()
-    print(100*SCALE**0.5*weights.dot(C.dot(weights))**0.5)
-    print(100*SCALE**0.5*df['I'].std())
-    return
 
 def backtest(
     csvs,
@@ -216,9 +212,9 @@ def backtest(
     else:
         benchmark = 'Static (EW)'
         rs[benchmark] = sum([rs[csvs[i]]/N for i in range(N)])
-    rs['Dynamic'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
-    describe(rs[csvs], '', window, intraday)
-    describe(rs[[benchmark,'Dynamic']], 'd', window, intraday)
+    rs['Backtest'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
+    describe(rs[csvs], '', window)
+    describe(rs[[benchmark,'Backtest']], 'd', window)
     return 0
 
 def parseOptions(args):
@@ -228,13 +224,14 @@ def parseOptions(args):
         '--window',
         dest='window',
         type=int,
+        default=100,
     )
     p.add_option(
         '-v',
         '--vol_center',
         dest='vol_center',
-        type=int,
-        default=0,
+        default=0.1,
+        type=float,
     )
     p.add_option(
         '-e',
@@ -247,31 +244,32 @@ def parseOptions(args):
         '-c',
         '--csvs',
         dest='csvs',
-        default=None,
+        default="SPY,TLT",
     )
     p.add_option(
         '-i',
         '--intraday',
-        action='store_true',
-        default=False,
+        dest="intraday",
+        action="store_false",
+        default=True,
     )
     p.add_option(
         '-s',
         '--static',
         dest='static',
-        default='',
+        default='VBINX',
     )
     p.add_option(
         '-o',
         '--optimization',
         dest='optimization',
-        default="MV",
+        default="RB:3,1",
     )
     p.add_option(
         '-d',
         '--dates',
         dest='dates',
-        default='',
+        default='1990-01-01/1990-01-01/2020-01-01',
         help='data_start/report_start/report_end',
     )
     (o,a) = p.parse_args(args)
@@ -279,12 +277,21 @@ def parseOptions(args):
 
 def main(args):
     o = parseOptions(args)
+    params = "|"+"|".join([
+        "c."+o.csvs,
+        "s."+o.static,
+        "w."+str(o.window)+("i" if o.intraday else ""),
+        "o."+o.optimization,
+        "v."+str(o.vol_center),
+    ])+"|"
     print(o)
     if o.edge:
         edge_data(o.csvs)
         return
     csvs = o.csvs.split(',') 
-    global N, EW, SCALE, DSD, RSD
+    #global VIX, DSD, RSD, RED, N, EW, SCALE
+    #VIX = collect_data(['^VIX'], o.intraday, False)
+    global DSD, RSD, RED, N, EW, SCALE
     if o.dates:
         DSD, RSD, RED = o.dates.split("/")
     if o.intraday:
@@ -316,9 +323,23 @@ def main(args):
         o.intraday,
         o.window,
         optimization,
-        float(o.vol_center)/100,
+        o.vol_center,
         o.static,
     )
+    with open("backtest.tex", "r") as fl, open("bt.tex", "w") as nfl:
+        ofl = []
+        for line in fl:
+            if "BT-PARAMS" in line:
+                line = line.replace("BT-PARAMS", params)
+            if "DATES" in line:
+                line = line.replace("DATES", o.dates)
+            ofl.append(line)
+        nfl.write("\n".join(ofl))
+    os.system((
+        "pdflatex bt.tex && "
+        "mv bt.pdf backtest.pdf && "
+        "rm *.png *.aux *.out *.log"
+    ))
     return
 
 if __name__ == '__main__':

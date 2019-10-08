@@ -1,0 +1,32 @@
+\documentclass[6pt]{article}
+\usepackage[includeheadfoot, top=1cm, bottom=1cm, left=0.67cm, right=1cm]{geometry}
+\usepackage{graphicx}
+
+\usepackage[yyyymmdd]{datetime}
+\renewcommand{\dateseparator}{-}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\texttt{Compiled on {\today} at \currenttime}}
+\rhead{\texttt{DATES}}
+\rfoot{Page \thepage}
+\lfoot{\texttt{BT-PARAMS}}
+ 
+\begin{document}
+
+\centering
+
+\begin{tabular}{c@{\hspace{1pt}}c}
+  \includegraphics[width=3.9in]{cr.png} & \includegraphics[width=3.9in]{ar.png} \\
+  \includegraphics[width=3.9in]{dd.png} & \includegraphics[width=3.9in]{corr.png} \\
+  \includegraphics[width=3.9in]{v.png} & \includegraphics[width=3.9in]{div.png} \\
+\end{tabular} 
+\newpage
+\begin{tabular}{c@{\hspace{1pt}}c}
+  \includegraphics[width=3.9in]{crd.png} & \includegraphics[width=3.9in]{ard.png} \\
+  \includegraphics[width=3.9in]{ddd.png} & \includegraphics[width=3.9in]{corrd.png} \\
+  \includegraphics[width=3.9in]{vd.png} & \includegraphics[width=3.9in]{x.png} \\
+\end{tabular} 
+
+\end{document}
