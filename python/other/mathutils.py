@@ -32,7 +32,7 @@ def binom(n, p, k, cdf=False):
         return nCr(n,k)*p**k*(1-p)**(n-k)
     else:
         c = 0
-        for i in range(x+1):
+        for i in range(k+1):
             c += binom(n, p, i)
         return c
 
