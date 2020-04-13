@@ -27,13 +27,13 @@ VIX = None
 plot_str = r'{0}: {1:0.2f}%, $\mu$={2:0.2f}%, $\wedge$={3:0.2f}%, $\vee$={4:0.2f}%'
 
 def describe(rs, tag, window):
-    cum_ret_plot(rs[RSD:RED], 'cr'+tag+'.png', SCALE)
-    drawdown_plot(rs[RSD:RED], 'dd'+tag+'.png')
+    cum_ret_plot(rs, 'cr'+tag+'.png', SCALE)
+    drawdown_plot(rs, 'dd'+tag+'.png')
     roll = rs.rolling(window=window)
     years = rs.groupby(pd.Grouper(freq='Y'))
     ar = 100*years.apply(lambda x: np.prod(1+x)-1)
     line_plot(
-        ar[RSD:RED], 
+        ar, 
         'ar'+tag+'.png',
         title='Realized Annual Returns',
         ylabel='Annual Return %',
@@ -52,13 +52,14 @@ def describe(rs, tag, window):
     cov['R'] = [r.reshape(M,M) for r in cor.values]
     rho = pd.DataFrame()
     cmbns = [(keys[0],keys[0])] if M<2 else cmb(keys,2)
-    for (i,j) in cmbns:
+    for (n,(i,j)) in enumerate(cmbns):
         rho[i+'-'+j] = cor[i][j]
+        scatter(rs[i], rs[j], "s"+str(n)+tag+".png", xlabel=i, ylabel=j, trendline=1, eigen=True)
     div = pd.DataFrame()
     div['Avg Corr'] = cov['R'].apply(lambda r: r.sum()/M**2)
     div['# of Bets'] = cov['C'].apply(lambda c: effective_bets(c))
     line_plot(
-        div[RSD:RED],
+        div,
         'div'+tag+'.png',
         title='Diversification Measures',
         ylabel='Diversification Metric',
@@ -69,7 +70,7 @@ def describe(rs, tag, window):
         handlelength=0,
     )
     line_plot(
-        rho[RSD:RED],
+        rho,
         'corr'+tag+'.png',
         title='Realized Rolling Correlation',
         ylabel='Correlation',
@@ -80,7 +81,17 @@ def describe(rs, tag, window):
     )
     vol = 100*roll.std()*SCALE**0.5
     #vol['^VIX'] = VIX
-    volatility_plot(vol[RSD:RED], 'v'+tag+'.png')
+    volatility_plot(vol, 'v'+tag+'.png')
+    histogram(
+        100*rs,
+        'h'+tag+'.png',
+        log=True,
+        alpha=0.5,
+        bin_size=0.1,
+        title="Return Distribution",
+        xlabel="Return %",
+        ylabel="Frequency (log scale)",
+    )
     return
 
 def edge_data(csvs):
@@ -104,7 +115,6 @@ def edge_data(csvs):
             raw = fl.readlines()
         begin = raw[-1].split(',')[0]
         sd = datetime.datetime.strptime(begin, '%Y-%m-%d').date()+datetime.timedelta(1)
-        print(csv, sd, ed)
         try:
             all_data = pdd.DataReader(csv, 'yahoo', start=sd, end=ed)
             lines = '\n'.join(all_data.to_csv().split('\n')[1:])
@@ -130,7 +140,7 @@ def generate_C(rs, window):
         print(100*r)
     return df[['C','R']]
 
-def diversify(rs, window, optimization, vol_center, max_leverage=3):
+def diversify(rs, window, optimization, vol_center, max_leverage=10):
     keys = rs.keys()
     df = generate_C(rs, window)
     df['X'] = [EW]+[optimization(C) for C in df.C.shift().dropna()]
@@ -213,9 +223,9 @@ def backtest(
         benchmark = 'Static (EW)'
         rs[benchmark] = sum([rs[csvs[i]]/N for i in range(N)])
     rs['Backtest'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
-    describe(rs[csvs], '', window)
-    describe(rs[[benchmark,'Backtest']], 'd', window)
-    return 0
+    describe(rs[csvs][RSD:RED], '', window)
+    describe(rs[[benchmark,'Backtest']][RSD:RED], 'd', window)
+    return rs
 
 def parseOptions(args):
     p = OptionParser('')
@@ -244,7 +254,7 @@ def parseOptions(args):
         '-c',
         '--csvs',
         dest='csvs',
-        default="SPY,TLT",
+        default="SPY,IEF",
     )
     p.add_option(
         '-i',
@@ -269,8 +279,8 @@ def parseOptions(args):
         '-d',
         '--dates',
         dest='dates',
-        default='1990-01-01/1990-01-01/2020-01-01',
-        help='data_start/report_start/report_end',
+        default='1990-01-01|1990-01-01|2021-01-01',
+        help='data_start|report_start|report_end',
     )
     (o,a) = p.parse_args(args)
     return o
@@ -293,7 +303,7 @@ def main(args):
     #VIX = collect_data(['^VIX'], o.intraday, False)
     global DSD, RSD, RED, N, EW, SCALE
     if o.dates:
-        DSD, RSD, RED = o.dates.split("/")
+        DSD, RSD, RED = o.dates.split("|")
     if o.intraday:
         SCALE *= 2
     N += len(csvs)
@@ -318,7 +328,7 @@ def main(args):
         'MB': lambda C: maximum_effective_bets(C, shorting='allowed'),
         'MBc': lambda C: maximum_effective_bets(C, shorting=False),
     }[sopt[0]]
-    backtest(
+    rs = backtest(
         csvs,
         o.intraday,
         o.window,
@@ -332,7 +342,11 @@ def main(args):
             if "BT-PARAMS" in line:
                 line = line.replace("BT-PARAMS", params)
             if "DATES" in line:
-                line = line.replace("DATES", o.dates)
+                line = line.replace("DATES", "|".join([
+                    rs.index[0].date().isoformat(),
+                    RSD,
+                    rs.index[-1].date().isoformat(),
+                ]))
             ofl.append(line)
         nfl.write("\n".join(ofl))
     os.system((

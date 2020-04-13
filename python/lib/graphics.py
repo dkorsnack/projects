@@ -120,7 +120,7 @@ def histogram(data, handle, **kwargs):
         legend=False,
     )
     plt.legend(
-        [dist_legend(data.values)],
+        [dist_legend(v) for v in zip(*data.values)],
         loc='best',
         fontsize=FONTSIZE,
         handlelength=0,

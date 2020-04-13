@@ -125,7 +125,7 @@ def risk_budget(C,B=None):
     br = np.append(ones, 0.).reshape(1,n+1)
     X = ones/n
     k = 1./n
-    for i in range(20):
+    for i in range(50):
         F = np.vstack([C.dot(X)-k*B/X, sum(X)[0]-1.])
         J = np.vstack([np.hstack([C+np.diag((k*B/X**2).flatten()), -B/X]), br])
         D = np.linalg.solve(J, -F)
