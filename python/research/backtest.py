@@ -207,15 +207,17 @@ def backtest(
     optimization,
     vol_center,
     static,
+    riskfree,
 ):
     tickers = csvs+[static] if static else csvs
-    rs = collect_data(tickers, intraday)[DSD:]
+    rs = collect_data(tickers+[riskfree], intraday)[DSD:]
     xx = diversify(
         rs[csvs],
         window,
         optimization,
         vol_center,
     )
+    xx[riskfree] = xx.apply(lambda x: max(0, 1-sum(x)), axis=1)
     exposure_plot(xx[RSD:RED], 'x.png')
     if static:
         benchmark = static
@@ -254,7 +256,13 @@ def parseOptions(args):
         '-c',
         '--csvs',
         dest='csvs',
-        default="SPY,IEF",
+        default="SPY,TLT",
+    )
+    p.add_option(
+        '-r',
+        '--riskfree',
+        dest='riskfree',
+        default="SHY",
     )
     p.add_option(
         '-i',
@@ -335,6 +343,7 @@ def main(args):
         optimization,
         o.vol_center,
         o.static,
+        o.riskfree,
     )
     with open("backtest.tex", "r") as fl, open("bt.tex", "w") as nfl:
         ofl = []
