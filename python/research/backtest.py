@@ -226,6 +226,7 @@ def backtest(
         rs[benchmark] = sum([rs[csvs[i]]/N for i in range(N)])
     rs['Backtest'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
     describe(rs[csvs][RSD:RED], '', window)
+    #describe(rs[csvs+[riskfree]][RSD:RED], '', window)
     describe(rs[[benchmark,'Backtest']][RSD:RED], 'd', window)
     return rs
 
@@ -256,7 +257,7 @@ def parseOptions(args):
         '-c',
         '--csvs',
         dest='csvs',
-        default="SPY,TLT",
+        default="SPY,IEF",
     )
     p.add_option(
         '-r',
