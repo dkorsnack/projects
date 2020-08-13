@@ -8,7 +8,8 @@ class TVM (object):
     instruction manual.) Given any four of {n, i, pmt, pv, fv} TVM object can
     calculate the fifth. For example:
 
-    >>> TVM(n=36, pv=6000, pmt=-200, fv=0).i*12
+    Example: What is the annual interest rate on a $6,000, 3 year loan, paying $200/month?
+    >>> TVM(n=12*3, pv=6000, pmt=-200, fv=0).i*12
     0.122489388032796
     '''
 
@@ -16,7 +17,7 @@ class TVM (object):
         self,
         n = None,
         i = None,
-        pv =None,
+        pv = None,
         pmt = None,
         fv = None,
         beginning = False
@@ -30,7 +31,7 @@ class TVM (object):
         self.__g = 1+i if beginning else 1
 
     def __repr__(self):
-        return "TVM(n=%s, i=%s, pv=%s, pmt=%s, fv=%s)" % (
+        return "TVM(n={}, i={}, pv={}, pmt={}, fv={})".format(
             self.__n, self.__i, self.__pv, self.__pmt, self.__fv
         )
 
@@ -84,7 +85,6 @@ class TVM (object):
                 n += 1
             self.__i = i1
             return self.__i
-
     def set_i(self, value):
         self.__i = value
     i = property(get_i, set_i, None, 'interest rate')
