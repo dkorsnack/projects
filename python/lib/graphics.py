@@ -155,23 +155,35 @@ def acorr_plot(data, handle, **kwargs):
     print('acorr_plot '+handle)
     fig.clf()
 
+"""
 moment_str = ', '.join([
     r'N={2}',
-    r'$\mu$={3:0.2f}%',
-    r'$\sigma$={4:0.2f}%',
-    r'$\mu/\sigma$={5:0.2f}',
-    r'$\lambda$={6:0.2f}',
-    r'$\kappa$={7:0.2f}',
+    r'Avg={3:0.2f}%',
+    r'Std={4:0.2f}%',
+    r'Avg/Std={5:0.2f}',
+    r'Skew={6:0.2f}',
+    r'Kurt={7:0.2f}',
+])
+"""
+
+moment_str = ', '.join([
+    r'Ann Ret={2:0.2f}%',
+    r'Ann Std={3:0.2f}%',
+    r'Sharpe={4:0.2f}',
 ])
 
 def cum_ret_legend(cum, rs, scale):
     legend = []
+    c = (1+rs['ZT'].mean()/5)**scale-1
+    del cum['ZT']
+    del rs['ZT']
     for (k,v) in cum.items():
         r = (1+rs[k].mean())**scale-1
         s = scale**0.5*rs[k].std()
-        legend.append((r'{0}: {1:0.2f} ['+moment_str+']').format(
-            k, v[-1], len(rs[k]), 100*r, 100*s, r/s, rs[k].skew(), rs[k].kurtosis())
-        )
+        legend.append((r'{0}: Last=${1:0.2f} ['+moment_str+']').format(
+            #k, v[-1], len(rs[k]), 100*r, 100*s, r/s, rs[k].skew(), rs[k].kurtosis())
+            k, v[-1], 100*r, 100*s, (r-c)/s, 
+        ))
     return legend
 
 def cum_ret_plot(rs, handle, scale, **kwargs):
@@ -196,14 +208,14 @@ def drawdown_plot(rs, handle, **kwargs):
         ylabel='Drawdown %',
         title='Drawdowns',
         legend = [
-            '{0}: {1:0.2f}% [$\wedge$={2:0.2f}]'.format(k, v[-1], v.min())
+            '{0}: Last={1:0.2f}% [Max={2:0.2f}]'.format(k, v[-1], v.min())
             for (k,v) in dd.items()
         ],
         **kwargs
     )
 
 def exposure_plot(ex, handle, **kwargs):
-    exp_str = '{0}: {1:0.2f}% [$\mu$={2:0.2f}%; $\mu\Delta$={3:0.2f}%, $\\vee\Delta$={4:0.2f}%]'
+    exp_str = '{0}: Last={1:0.2f}% [Avg={2:0.2f}%; Avg Chg={3:0.2f}%, Max Chg={4:0.2f}%]'
     xxa = 100*ex
     xxd = abs(xxa.diff()).fillna(0)
     leg = [exp_str.format(
@@ -232,7 +244,7 @@ def volatility_plot(vol, handle, **kwargs):
         title=kwargs.pop('title', 'Realized Rolling Volatility'),
         ylabel=kwargs.pop('ylabel', 'Volatility %'),
         legend = [
-            '{0}: {1:0.2f}% [$\mu$={2:0.2f}%, $\wedge$={3:0.2f}%, $\\vee$={4:0.2f}%]'.format(
+            '{0}: Last={1:0.2f}% [Avg={2:0.2f}%, Min={3:0.2f}%, Max={4:0.2f}%]'.format(
                 k, v[-1], v.mean(), v.min(), v.max()
             ) for (k,v) in vol.items()
         ],

@@ -23,10 +23,45 @@ EW = None
 SCALE = 252
 (DSD,RSD,RED) = (None,None,None)
 VIX = None
+IB_RENAME = {
+    'EEM': 'MXEA',
+    'EFA': 'MXEF',
+    'GLD': 'GC',
+    'IEF': 'ZN',
+    'IWM': 'RTY', 
+    'QQQ': 'NQ',
+    'SHY': 'ZT',
+    'SLV': 'SI',
+    'SPY': 'ES',
+    'TLT': 'ZB',
+    'VBINX': '60/40',
+}
+ASSET_CLASS = {
+    'EEM': 'Stock',
+    'EFA': 'Stock',
+    'GLD': 'Commodity',
+    'IEF': 'Bond',
+    'IWM': 'Stock', 
+    'QQQ': 'Stock',
+    'SHY': 'Cash',
+    'SLV': 'Commodity',
+    'SPY': 'Stock',
+    'TLT': 'Bond',
+    'VBINX': 'Blend',
+}
 
-plot_str = r'{0}: {1:0.2f}%, $\mu$={2:0.2f}%, $\wedge$={3:0.2f}%, $\vee$={4:0.2f}%'
+plot_str = r'{0}: Last={1:0.2f}% [Avg={2:0.2f}%, Min={3:0.2f}%, Max={4:0.2f}%]'
 
-def describe(rs, tag, window):
+def describe(df, tag, window, csv):
+    if csv:
+        foo = ['VBINX', 'Backtest', 'SHY']
+        df = pd.read_csv(
+            "lppl.csv",
+            index_col='datetime',
+            parse_dates=['datetime'],
+            usecols=['datetime']+[f+'_r' for f in foo],
+        ).rename(columns={f+'_r':f for f in foo}) 
+    rs = df.rename(columns=IB_RENAME)
     cum_ret_plot(rs, 'cr'+tag+'.png', SCALE)
     drawdown_plot(rs, 'dd'+tag+'.png')
     roll = rs.rolling(window=window)
@@ -54,7 +89,7 @@ def describe(rs, tag, window):
     cmbns = [(keys[0],keys[0])] if M<2 else cmb(keys,2)
     for (n,(i,j)) in enumerate(cmbns):
         rho[i+'-'+j] = cor[i][j]
-        scatter(rs[i], rs[j], "s"+str(n)+tag+".png", xlabel=i, ylabel=j, trendline=1, eigen=True)
+        #scatter(rs[i], rs[j], "s"+str(n)+tag+".png", xlabel=i, ylabel=j, trendline=1, eigen=True)
     div = pd.DataFrame()
     div['Avg Corr'] = cov['R'].apply(lambda r: r.sum()/M**2)
     div['# of Bets'] = cov['C'].apply(lambda c: effective_bets(c))
@@ -64,7 +99,7 @@ def describe(rs, tag, window):
         title='Diversification Measures',
         ylabel='Diversification Metric',
         legend = [
-            plot_str.format(k, v[-1], v.mean(), v.min(), v.max())
+            plot_str.replace("%","").format(k, v[-1], v.mean(), v.min(), v.max())
             for (k,v) in div.items()
         ],
         handlelength=0,
@@ -74,14 +109,15 @@ def describe(rs, tag, window):
         'corr'+tag+'.png',
         title='Realized Rolling Correlation',
         ylabel='Correlation',
-        legend = [
-            plot_str.format(k, v[-1], v.mean(), v.min(), v.max())
+        legend = [] if len(rho.columns) > 10 else [
+            plot_str.replace("%","").format(k, v[-1], v.mean(), v.min(), v.max())
             for (k,v) in rho.items()
         ],
     )
     vol = 100*roll.std()*SCALE**0.5
     #vol['^VIX'] = VIX
     volatility_plot(vol, 'v'+tag+'.png')
+    """
     histogram(
         100*rs,
         'h'+tag+'.png',
@@ -92,6 +128,7 @@ def describe(rs, tag, window):
         xlabel="Return %",
         ylabel="Frequency (log scale)",
     )
+    """
     return
 
 def edge_data(csvs):
@@ -110,6 +147,7 @@ def edge_data(csvs):
     else:
         csvs = csvs.split(',')
     for csv in csvs:
+        print(csv)
         path = PATH+'/'+csv+'.csv'
         with open(path) as fl:
             raw = fl.readlines()
@@ -140,7 +178,7 @@ def generate_C(rs, window):
         print(100*r)
     return df[['C','R']]
 
-def diversify(rs, window, optimization, vol_center, max_leverage=10):
+def diversify(rs, window, optimization, vol_center, max_leverage):
     keys = rs.keys()
     df = generate_C(rs, window)
     df['X'] = [EW]+[optimization(C) for C in df.C.shift().dropna()]
@@ -208,6 +246,7 @@ def backtest(
     vol_center,
     static,
     riskfree,
+    max_leverage,
 ):
     tickers = csvs+[static] if static else csvs
     rs = collect_data(tickers+[riskfree], intraday)[DSD:]
@@ -216,18 +255,24 @@ def backtest(
         window,
         optimization,
         vol_center,
+        max_leverage,
     )
     xx[riskfree] = xx.apply(lambda x: max(0, 1-sum(x)), axis=1)
-    exposure_plot(xx[RSD:RED], 'x.png')
+    xxx = pd.DataFrame()
+    for ac in set(ASSET_CLASS.values()):
+        if ac not in ('Blend',):
+            xxx[ac] = xx[[c for c in xx.columns if ASSET_CLASS[c] == ac]].sum(axis=1)
+    exposure_plot(xxx.rename(columns=IB_RENAME)[RSD:RED], 'x.png')
     if static:
         benchmark = static
     else:
         benchmark = 'Static (EW)'
         rs[benchmark] = sum([rs[csvs[i]]/N for i in range(N)])
+    xx['Backtest'] = xx.sum(axis=1)
     rs['Backtest'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
-    describe(rs[csvs][RSD:RED], '', window)
-    #describe(rs[csvs+[riskfree]][RSD:RED], '', window)
-    describe(rs[[benchmark,'Backtest']][RSD:RED], 'd', window)
+    describe(rs[csvs+[riskfree]][RSD:RED], '', window, False)
+    describe(rs[[benchmark,'Backtest', riskfree]][RSD:RED], 'd', window, True)
+    jn = rs.join(xx, how='outer', lsuffix='_r', rsuffix='_x').to_csv('backtest.csv')
     return rs
 
 def parseOptions(args):
@@ -257,7 +302,7 @@ def parseOptions(args):
         '-c',
         '--csvs',
         dest='csvs',
-        default="SPY,IEF",
+        default="SPY,IWM,QQQ,GLD,TLT",
     )
     p.add_option(
         '-r',
@@ -282,7 +327,7 @@ def parseOptions(args):
         '-o',
         '--optimization',
         dest='optimization',
-        default="RB:3,1",
+        default="RB:2,2,2,1,2",
     )
     p.add_option(
         '-d',
@@ -290,6 +335,12 @@ def parseOptions(args):
         dest='dates',
         default='1990-01-01|1990-01-01|2021-01-01',
         help='data_start|report_start|report_end',
+    )
+    p.add_option(
+        "-l",
+        "--max_leverage",
+        dest="max_leverage",
+        default='10',
     )
     (o,a) = p.parse_args(args)
     return o
@@ -302,6 +353,7 @@ def main(args):
         "w."+str(o.window)+("i" if o.intraday else ""),
         "o."+o.optimization,
         "v."+str(o.vol_center),
+        "l."+o.max_leverage,
     ])+"|"
     print(o)
     if o.edge:
@@ -345,6 +397,7 @@ def main(args):
         o.vol_center,
         o.static,
         o.riskfree,
+        int(o.max_leverage),
     )
     with open("backtest.tex", "r") as fl, open("bt.tex", "w") as nfl:
         ofl = []
@@ -362,7 +415,7 @@ def main(args):
     os.system((
         "pdflatex bt.tex && "
         "mv bt.pdf backtest.pdf && "
-        "rm *.png *.aux *.out *.log"
+        "rm *.aux *.out *.log"
     ))
     return
 
