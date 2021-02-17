@@ -23,32 +23,36 @@ EW = None
 SCALE = 252
 (DSD,RSD,RED) = (None,None,None)
 VIX = None
-IB_RENAME = {
-    'EEM': 'MXEA',
-    'EFA': 'MXEF',
-    'GLD': 'GC',
-    'IEF': 'ZN',
-    'IWM': 'RTY', 
-    'QQQ': 'NQ',
-    'SHY': 'ZT',
-    'SLV': 'SI',
-    'SPY': 'ES',
-    'TLT': 'ZB',
-    'VBINX': '60/40',
+ETF_DICT = {
+    #ETF: (IB_Ticker, Asset_Class),
+    'EEM': ('MXEA', 'Equity'),
+    'EFA': ('MXEF', 'Equity'),
+    'GLD': ('GC', 'Commodity'),
+    'IEF': ('ZN', 'Bond'),
+    'IWM': ('RTY', 'Equity'),
+    'QQQ': ('NQ', 'Equity'),
+    'SHY': ('ZT', 'Cash'),
+    'SLV': ('SI', 'Commodity'),
+    'SPY': ('ES', 'Equity'),
+    'TLT': ('ZB', 'Bond'),
+    'LQD': ('LQD', 'Credit'),
+    'HYG': ('HYG', 'Credit'),
+    'XLB': ('XLB', 'Equity'),
+    'XLE': ('XLE', 'Equity'),
+    'XLF': ('XLF', 'Equity'),
+    'XLI': ('XLI', 'Equity'),
+    'XLK': ('XLK', 'Equity'),
+    'XLP': ('XLP', 'Equity'),
+    'XLU': ('XLU', 'Equity'),
+    'XLV': ('XLV', 'Equity'),
+    'XLY': ('XLY', 'Equity'),
+    'VBINX': ('60/40', 'Blend'),
 }
-ASSET_CLASS = {
-    'EEM': 'Stock',
-    'EFA': 'Stock',
-    'GLD': 'Commodity',
-    'IEF': 'Bond',
-    'IWM': 'Stock', 
-    'QQQ': 'Stock',
-    'SHY': 'Cash',
-    'SLV': 'Commodity',
-    'SPY': 'Stock',
-    'TLT': 'Bond',
-    'VBINX': 'Blend',
-}
+IB_RENAME = {}
+ASSET_CLASS = {}
+for (etf,(ib,ac)) in ETF_DICT.items():
+    IB_RENAME[etf] = ib
+    ASSET_CLASS[etf] = ac
 
 plot_str = r'{0}: Last={1:0.2f}% [Avg={2:0.2f}%, Min={3:0.2f}%, Max={4:0.2f}%]'
 
@@ -271,7 +275,7 @@ def backtest(
     xx['Backtest'] = xx.sum(axis=1)
     rs['Backtest'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
     describe(rs[csvs+[riskfree]][RSD:RED], '', window, False)
-    describe(rs[[benchmark,'Backtest', riskfree]][RSD:RED], 'd', window, True)
+    describe(rs[[benchmark,'Backtest', riskfree]][RSD:RED], 'd', window, False)
     jn = rs.join(xx, how='outer', lsuffix='_r', rsuffix='_x').to_csv('backtest.csv')
     return rs
 
@@ -333,7 +337,7 @@ def parseOptions(args):
         '-d',
         '--dates',
         dest='dates',
-        default='1990-01-01|1990-01-01|2021-01-01',
+        default='1990-01-01|1990-01-01|2021-12-31',
         help='data_start|report_start|report_end',
     )
     p.add_option(
