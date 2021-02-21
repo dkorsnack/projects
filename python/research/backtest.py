@@ -35,8 +35,8 @@ ETF_DICT = {
     'SLV': ('SI', 'Commodity'),
     'SPY': ('ES', 'Equity'),
     'TLT': ('ZB', 'Bond'),
-    'LQD': ('LQD', 'Credit'),
-    'HYG': ('HYG', 'Credit'),
+    #'LQD': ('LQD', 'Credit'),
+    #'HYG': ('HYG', 'Credit'),
     'XLB': ('XLB', 'Equity'),
     'XLE': ('XLE', 'Equity'),
     'XLF': ('XLF', 'Equity'),
@@ -307,6 +307,7 @@ def parseOptions(args):
         '--csvs',
         dest='csvs',
         default="SPY,IWM,QQQ,GLD,TLT",
+        #default="XLB,XLE,XLF,XLK,XLI,XLP,XLU,XLV,XLY,IWM,QQQ,GLD,TLT",
     )
     p.add_option(
         '-r',
@@ -332,6 +333,7 @@ def parseOptions(args):
         '--optimization',
         dest='optimization',
         default="RB:2,2,2,1,2",
+        #default="RB:2,2,2,2,2,2,2,2,2,18,18,9,18",
     )
     p.add_option(
         '-d',
