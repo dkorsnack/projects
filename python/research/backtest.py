@@ -3,6 +3,7 @@
 import os
 import sys
 import datetime
+import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -66,6 +67,7 @@ def describe(df, tag, window, csv):
             usecols=['datetime']+[f+'_r' for f in foo],
         ).rename(columns={f+'_r':f for f in foo}) 
     rs = df.rename(columns=IB_RENAME)
+    #pickle.dump(rs, open("rs3.pkl", "wb"))
     cum_ret_plot(rs, 'cr'+tag+'.png', SCALE)
     drawdown_plot(rs, 'dd'+tag+'.png')
     roll = rs.rolling(window=window)
@@ -84,7 +86,6 @@ def describe(df, tag, window, csv):
     )
     keys = rs.keys()
     M = len(keys)
-    ew = np.array([1./M]*M)
     cor = roll.corr().unstack(level=1)
     cov = roll.cov().unstack(level=1)
     cov['C'] = [c.reshape(M,M) for c in cov.values]
@@ -119,7 +120,7 @@ def describe(df, tag, window, csv):
         ],
     )
     vol = 100*roll.std()*SCALE**0.5
-    #vol['^VIX'] = VIX
+    vol['^VIX'] = VIX
     volatility_plot(vol, 'v'+tag+'.png')
     """
     histogram(
@@ -182,32 +183,55 @@ def generate_C(rs, window):
         print(100*r)
     return df[['C','R']]
 
-def diversify(rs, window, optimization, vol_center, max_leverage):
+def diversify(rs, window, optimization, vol_target, vol_lookback, max_leverage):
     keys = rs.keys()
     df = generate_C(rs, window)
     df['X'] = [EW]+[optimization(C) for C in df.C.shift().dropna()]
-    df['V'] = [SCALE**0.5*w.dot(c.dot(w))**0.5 for (w,c) in zip(df.X, df.C)]
-    if vol_center:
-        vc = vol_center
+    df['cV'] = [SCALE**0.5*w.dot(c.dot(w))**0.5 for (w,c) in zip(df.X, df.C)]
+    df['R'] = [w.dot(r.dot(w)) for (w,r) in zip(df.X, df.R)]
+    if vol_lookback:
+        lb = vol_lookback*390
+        vf = pd.read_csv(
+            "spy.gz",
+            index_col='Date',
+            compression='gzip',
+            parse_dates=['Date']
+        )
+        vf['SPYr'] = vf.SPY.pct_change().shift()
+        vf['SPYs'] = (252*390)**0.5*vf.SPYr.rolling(window=lb).std()
+        df = df.join(vf[['SPYs']], how='inner')
+        df['lV'] = df.SPYs
+        #df['V'] = df.lV
+        df['V'] = df.R**0.5*df.lV
+        df['VIX'] = VIX/100
+        foo = df.dropna()[['VIX','cV','lV','V']]
+        line_plot(foo, 'out.png')
+        scatter(foo.VIX, foo.V, 'out1.png', trendline=1)
+    else:
+        df['V'] = df.cV
+    if vol_target:
+        vc = vol_target
         df['L'] = [
             1 if np.isnan(v) else min(max_leverage, vc/v)
             for v in df.V.shift()
         ]
         """
         df['VIX'] = VIX.shift()
-        df['L'] = [vol_center/v for v in df.VIX]
+        df['L'] = [vol_target/v for v in df.VIX]
         """
         """
         df['VIX'] = VIX
         df['L'] = [1]+[
-            vol_center/(v*r.mean()**0.5)
+            vol_target/(v*r.mean()**0.5)
             for (_,v,r) in df[['VIX','R']].shift().dropna().to_records()
         ]
         """
         df['X'] *= df.L
-        df['V'] = [
-            SCALE**0.5*w.dot(c.dot(w))**0.5 for (w,c) in zip(df.X, df.C)
-        ]
+    else:
+        df['X'] = 1
+    df['V'] = [
+        SCALE**0.5*w.dot(c.dot(w))**0.5 for (w,c) in zip(df.X, df.C)
+    ]
     print('EXP:')
     print(100*df.X.values[-1])
     print('pVOL: {0: 0.2f}%'.format(100*df.V.values[-1]))
@@ -230,7 +254,7 @@ def collect_data(csvs, intraday, ret=True):
         if intraday:
             op = pd.DataFrame()
             op[csv+'_Adj Close'] = security[csv+'_Open']*security[csv+'_Adj Close']/security[csv+'_Close']
-            op.index = [dt.replace(hour=9, minute=30) for dt in op.index]
+            op.index = [dt.replace(hour=9, minute=31) for dt in op.index]
             sec = pd.DataFrame(pd.concat([op[csv+'_Adj Close'], security[csv+'_Adj Close']]).sort_index())
         else:
             sec = security[[csv+'_Adj Close']]
@@ -247,7 +271,8 @@ def backtest(
     intraday,
     window,
     optimization,
-    vol_center,
+    vol_target,
+    vol_lookback,
     static,
     riskfree,
     max_leverage,
@@ -258,12 +283,13 @@ def backtest(
         rs[csvs],
         window,
         optimization,
-        vol_center,
+        vol_target,
+        vol_lookback,
         max_leverage,
     )
     xx[riskfree] = xx.apply(lambda x: max(0, 1-sum(x)), axis=1)
     xxx = pd.DataFrame()
-    for ac in set(ASSET_CLASS.values()):
+    for ac in sorted(set(ASSET_CLASS.values())):
         if ac not in ('Blend',):
             xxx[ac] = xx[[c for c in xx.columns if ASSET_CLASS[c] == ac]].sum(axis=1)
     exposure_plot(xxx.rename(columns=IB_RENAME)[RSD:RED], 'x.png')
@@ -272,11 +298,20 @@ def backtest(
     else:
         benchmark = 'Static (EW)'
         rs[benchmark] = sum([rs[csvs[i]]/N for i in range(N)])
-    xx['Backtest'] = xx.sum(axis=1)
+    xx['Backtest_x'] = xx.sum(axis=1)
+    jn = rs.join(xx, how='inner', lsuffix='_r', rsuffix='_x')
+    #jn.fillna(method='ffill', inplace=True)
+    jn['Backtest_r'] = sum([jn[csvs[i]+"_r"]*jn[csvs[i]+"_x"] for i in range(N)])
+    #jn.to_csv('backtest.csv')
+    jn.rename(columns={c:c[:-2] for c in jn.columns if '_r' in c}, inplace=True)
+    describe(jn[csvs+[riskfree]][RSD:RED], '', window, False)
+    describe(jn[[benchmark,'Backtest', riskfree]][RSD:RED], 'd', window, False)
+    """
     rs['Backtest'] = sum([xx[csvs[i]]*rs[csvs[i]] for i in range(N)])
     describe(rs[csvs+[riskfree]][RSD:RED], '', window, False)
     describe(rs[[benchmark,'Backtest', riskfree]][RSD:RED], 'd', window, False)
     jn = rs.join(xx, how='outer', lsuffix='_r', rsuffix='_x').to_csv('backtest.csv')
+    """
     return rs
 
 def parseOptions(args):
@@ -290,10 +325,9 @@ def parseOptions(args):
     )
     p.add_option(
         '-v',
-        '--vol_center',
-        dest='vol_center',
-        default=0.1,
-        type=float,
+        '--vol_target',
+        dest='vol_target',
+        default='10-0d',
     )
     p.add_option(
         '-e',
@@ -358,7 +392,7 @@ def main(args):
         "s."+o.static,
         "w."+str(o.window)+("i" if o.intraday else ""),
         "o."+o.optimization,
-        "v."+str(o.vol_center),
+        "v."+o.vol_target,
         "l."+o.max_leverage,
     ])+"|"
     print(o)
@@ -366,9 +400,8 @@ def main(args):
         edge_data(o.csvs)
         return
     csvs = o.csvs.split(',') 
-    #global VIX, DSD, RSD, RED, N, EW, SCALE
-    #VIX = collect_data(['^VIX'], o.intraday, False)
-    global DSD, RSD, RED, N, EW, SCALE
+    global VIX, DSD, RSD, RED, N, EW, SCALE
+    VIX = collect_data(['^VIX'], o.intraday, False)
     if o.dates:
         DSD, RSD, RED = o.dates.split("|")
     if o.intraday:
@@ -395,12 +428,14 @@ def main(args):
         'MB': lambda C: maximum_effective_bets(C, shorting='allowed'),
         'MBc': lambda C: maximum_effective_bets(C, shorting=False),
     }[sopt[0]]
+    sv = o.vol_target.split("-")
     rs = backtest(
         csvs,
         o.intraday,
         o.window,
         optimization,
-        o.vol_center,
+        float(sv[0])/100,
+        int(sv[1][:-1]),
         o.static,
         o.riskfree,
         int(o.max_leverage),
@@ -421,7 +456,7 @@ def main(args):
     os.system((
         "pdflatex bt.tex && "
         "mv bt.pdf backtest.pdf && "
-        "rm *.aux *.out *.log"
+        "rm bt.tex bt.pdf *.aux *.out *.log" #*.png"
     ))
     return
 
